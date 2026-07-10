@@ -23,6 +23,9 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (req, res) => res.send('OK'));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
