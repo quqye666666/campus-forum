@@ -1,5 +1,4 @@
 const express = require('express');
-const http = require('http');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
@@ -24,7 +23,8 @@ app.use((req, res, next) => {
 
 app.get('/health', (req, res) => res.send('OK'));
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  console.log('ROOT HIT!', __dirname, path.join(__dirname, 'public', 'index.html'));
+  res.send('OK-' + Date.now());
 });
 
 app.use(express.json());
@@ -568,7 +568,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-const server = http.createServer(app);
-server.listen(PORT, '::', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`校园论坛已启动: http://0.0.0.0:${PORT}`);
 });
