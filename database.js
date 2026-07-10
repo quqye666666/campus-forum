@@ -6,23 +6,6 @@ const db = new Database(path.join(__dirname, 'forum.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-const userColumns = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
-if (!userColumns.includes('birthday')) {
-  db.exec('ALTER TABLE users ADD COLUMN birthday TEXT DEFAULT ""');
-}
-if (!userColumns.includes('gender')) {
-  db.exec('ALTER TABLE users ADD COLUMN gender TEXT DEFAULT ""');
-}
-if (!userColumns.includes('grade')) {
-  db.exec('ALTER TABLE users ADD COLUMN grade TEXT DEFAULT ""');
-}
-if (!userColumns.includes('avatar_url')) {
-  db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ""');
-}
-if (!userColumns.includes('signature')) {
-  db.exec('ALTER TABLE users ADD COLUMN signature TEXT DEFAULT ""');
-}
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,6 +121,23 @@ db.exec(`
     FOREIGN KEY (group_id) REFERENCES groups_chat(id) ON DELETE CASCADE
   );
 `);
+
+const userColumns = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+if (!userColumns.includes('birthday')) {
+  db.exec('ALTER TABLE users ADD COLUMN birthday TEXT DEFAULT ""');
+}
+if (!userColumns.includes('gender')) {
+  db.exec('ALTER TABLE users ADD COLUMN gender TEXT DEFAULT ""');
+}
+if (!userColumns.includes('grade')) {
+  db.exec('ALTER TABLE users ADD COLUMN grade TEXT DEFAULT ""');
+}
+if (!userColumns.includes('avatar_url')) {
+  db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ""');
+}
+if (!userColumns.includes('signature')) {
+  db.exec('ALTER TABLE users ADD COLUMN signature TEXT DEFAULT ""');
+}
 
 const postColumns = db.prepare("PRAGMA table_info(posts)").all().map(c => c.name);
 if (!postColumns.includes('media_type')) {
