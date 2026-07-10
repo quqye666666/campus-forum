@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
@@ -564,6 +565,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const http = require('http');
+const server = http.createServer(app);
+server.listen(PORT, '::', () => {
   console.log(`校园论坛已启动: http://0.0.0.0:${PORT}`);
 });
