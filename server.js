@@ -565,7 +565,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-const http = require('http');
 const server = http.createServer(app);
 server.listen(PORT, '::', () => {
   console.log(`校园论坛已启动: http://0.0.0.0:${PORT}`);
