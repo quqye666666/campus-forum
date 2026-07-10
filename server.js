@@ -21,6 +21,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/health', (req, res) => res.send('OK'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -555,6 +557,11 @@ app.get('/api/groups', requireAuth, (req, res) => {
     FROM groups_chat g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = ?
   `).all(req.session.userId);
   res.json(groups);
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: err.message });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
