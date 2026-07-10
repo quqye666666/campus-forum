@@ -1,0 +1,8 @@
+node_modules
+.env
+forum.db
+forum.db-shm
+forum.db-wal
+forum.db-journal
+public/uploads
+ui.zip

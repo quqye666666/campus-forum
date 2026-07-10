@@ -1,0 +1,23 @@
+{
+  "name": "campus-forum",
+  "version": "1.0.0",
+  "description": "校园论坛 - 类似QQ动态的信息流平台",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "forum",
+    "campus",
+    "social"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.2.0"
+  }
+}
