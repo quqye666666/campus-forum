@@ -12,20 +12,11 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
-  next();
-});
-
 app.get('/health', (req, res) => res.send('OK'));
-app.get('/', (req, res) => {
-  console.log('ROOT HIT!', __dirname, path.join(__dirname, 'public', 'index.html'));
-  res.send('OK-' + Date.now());
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
