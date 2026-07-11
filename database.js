@@ -178,7 +178,6 @@ const defaultSections = [
   { name: '生活趣事', icon: '🎉', description: '分享校园生活' },
   { name: '活动通知', icon: '📢', description: '社团活动、讲座通知' },
   { name: '表白墙', icon: '💌', description: '匿名表白、悄悄话' },
-  { name: '求职实习', icon: '💼', description: '实习招聘信息' },
   { name: '技术讨论', icon: '💻', description: '编程技术交流' },
 ];
 
