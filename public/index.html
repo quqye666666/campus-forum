@@ -50,6 +50,7 @@
       <input type="text" id="searchInput" placeholder="搜索帖子..." onkeydown="if(event.key==='Enter')searchPosts()">
     </div>
     <div class="user-info">
+      <span class="online-count" id="onlineCount" title="在线人数">🟢 0</span>
       <button class="btn btn-outline btn-sm" style="margin-right:12px" onclick="showChat()">💬 私信</button>
       <div class="user-avatar" id="topAvatar" onclick="goMyProfile(event)" title="个人主页"></div>
       <div class="user-name-area" onclick="toggleUserDropdown(event)">
@@ -90,11 +91,21 @@
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 图片/视频/文件
                 <input type="file" id="imageInput" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" multiple onchange="previewImages()">
               </label>
+              <button class="btn btn-outline btn-sm" onclick="togglePollForm()">📊 投票</button>
             </div>
             <button class="btn btn-primary btn-sm" onclick="createPost()">发布动态</button>
           </div>
+          <div class="poll-form" id="pollForm" style="display:none">
+            <input type="text" id="pollQuestion" placeholder="投票问题" style="width:100%;margin-bottom:8px">
+            <div id="pollOptions">
+              <div class="poll-option-row"><input type="text" placeholder="选项 1"><span class="poll-opt-remove" onclick="removePollOption(this)">✕</span></div>
+              <div class="poll-option-row"><input type="text" placeholder="选项 2"><span class="poll-opt-remove" onclick="removePollOption(this)">✕</span></div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addPollOption()">+ 添加选项</button>
+          </div>
         </div>
         <div id="postsList"></div>
+        <div id="pollsContainer"></div>
         <div id="loadingMore" class="loading-more" style="display:none"><div class="spinner"></div>加载中...</div>
       </main>
       <aside class="right-panel">

@@ -8,12 +8,14 @@ var hasMorePosts = true;
 var bgList = [];
 var bgIndex = 0;
 var bgTimer = null;
+var pollActive = false;
+var onlineInterval = null;
 
 (function init() {
   loadBgList();
   fetch('/api/user/me').then(function(r) { return r.json(); }).then(function(user) {
     currentUser = user;
-    if (user) { showApp(); loadSections(); loadPosts(); setupScroll(); }
+    if (user) { showApp(); loadSections(); loadPosts(); loadPolls(); setupScroll(); }
   }).catch(function(e) { console.log('init:', e); });
 })();
 
@@ -151,6 +153,18 @@ function showApp() {
   document.getElementById('appLayout').style.display = 'block';
   document.getElementById('topNickname').textContent = currentUser.nickname;
   document.getElementById('topAvatar').textContent = currentUser.nickname[0];
+  startOnlineCount();
+}
+
+function startOnlineCount() {
+  updateOnlineCount();
+  onlineInterval = setInterval(updateOnlineCount, 30000);
+}
+
+function updateOnlineCount() {
+  fetch('/api/online').then(function(r) { return r.json(); }).then(function(d) {
+    document.getElementById('onlineCount').textContent = '🟢 ' + d.online;
+  }).catch(function() {});
 }
 
 /* 页面切换 */
@@ -162,6 +176,7 @@ function showMainPage() {
   currentPage = 1;
   hasMorePosts = true;
   loadPosts();
+  loadPolls();
   closeDropdown();
 }
 
@@ -269,7 +284,6 @@ function loadPosts() {
 
 function buildCard(post) {
   var div = document.createElement('div');
-  div.className = 'post-card';
   div.id = 'post-' + post.id;
   var time = formatTime(parseTime(post.created_at));
   var liked = post.is_liked ? 'liked' : '';
@@ -303,14 +317,19 @@ function buildCard(post) {
   var delHtml = (currentUser && currentUser.id === post.user_id) ?
     '<button class="action-btn" style="margin-left:auto;color:var(--danger)" onclick="deletePost(' + post.id + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除</button>' : '';
 
+  var confessionBadge = post.is_anonymous ? '<span class="confession-badge">💌 表白墙 · 匿名</span>' : '';
+  var cardClass = post.is_anonymous ? 'post-card confession-post' : 'post-card';
+  div.className = cardClass;
+
   div.innerHTML =
     '<div class="post-header">' +
-      '<div class="post-avatar" onclick="showProfile(' + post.user_id + ')">' + post.nickname[0] + '</div>' +
+      '<div class="post-avatar" onclick="showProfile(' + post.user_id + ')">' + (post.is_anonymous ? '💌' : post.nickname[0]) + '</div>' +
       '<div class="post-user-info">' +
         '<div class="post-nickname" onclick="showProfile(' + post.user_id + ')">' + escapeHtml(post.nickname) + '</div>' +
         '<div class="post-time">' + time + '</div>' +
       '</div>' +
       '<span class="post-section-tag" onclick="event.stopPropagation();selectSection(' + post.section_id + ')">' + post.section_icon + ' ' + post.section_name + '</span>' +
+      confessionBadge +
     '</div>' +
     '<div class="post-content">' + escapeHtml(post.content) + '</div>' + imgHtml +
     '<div class="post-actions">' +
@@ -395,6 +414,10 @@ function toggleLike(pid, btnEl) {
 
 /* 发布 */
 function createPost() {
+  if (pollActive) {
+    createPoll();
+    return;
+  }
   var content = document.getElementById('postContent').value.trim();
   if (!content) { showToast('请输入内容', 'error'); return; }
   var fd = new FormData();
@@ -411,6 +434,29 @@ function createPost() {
     loadPosts();
     loadSections();
   }).catch(function(e) { console.log('createPost:', e); });
+}
+
+function createPoll() {
+  var question = document.getElementById('pollQuestion').value.trim();
+  if (!question) { showToast('请输入投票问题', 'error'); return; }
+  var inputs = document.querySelectorAll('#pollOptions input');
+  var options = [];
+  inputs.forEach(function(inp) {
+    var v = inp.value.trim();
+    if (v) options.push(v);
+  });
+  if (options.length < 2) { showToast('至少填写2个选项', 'error'); return; }
+  fetch('/api/polls', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: question, options: options })
+  }).then(function(r) { return r.json(); }).then(function() {
+    document.getElementById('pollQuestion').value = '';
+    inputs.forEach(function(inp) { inp.value = ''; });
+    togglePollForm();
+    showToast('投票已发布！', 'success');
+    loadPosts();
+  }).catch(function(e) { console.log('createPoll:', e); });
 }
 
 /* 删除 */
@@ -939,4 +985,67 @@ function createGroup() {
     loadConversations();
     showToast('群聊已创建', 'success');
   });
+}
+
+/* 投票功能 */
+function togglePollForm() {
+  pollActive = !pollActive;
+  document.getElementById('pollForm').style.display = pollActive ? 'block' : 'none';
+}
+
+function addPollOption() {
+  var row = document.createElement('div');
+  row.className = 'poll-option-row';
+  var n = document.querySelectorAll('#pollOptions input').length + 1;
+  row.innerHTML = '<input type="text" placeholder="选项 ' + n + '"><span class="poll-opt-remove" onclick="removePollOption(this)">✕</span>';
+  document.getElementById('pollOptions').appendChild(row);
+}
+
+function removePollOption(el) {
+  var rows = document.querySelectorAll('#pollOptions .poll-option-row');
+  if (rows.length <= 2) { showToast('至少需要2个选项', 'error'); return; }
+  el.parentElement.remove();
+}
+
+function loadPolls() {
+  fetch('/api/polls').then(function(r) { return r.json(); }).then(function(polls) {
+    var container = document.getElementById('pollsContainer');
+    if (!container) return;
+    if (!polls.length) { container.innerHTML = ''; return; }
+    container.innerHTML = polls.map(function(p) { return buildPollCard(p); }).join('');
+  }).catch(function(e) { console.log('loadPolls:', e); });
+}
+
+function buildPollCard(poll) {
+  var voted = poll.my_vote !== null;
+  var opts = poll.options_with_votes;
+  var total = poll.total_votes || 1;
+  var optsHtml = opts.map(function(o, i) {
+    var pct = Math.round(o.count / total * 100);
+    var bar = voted ? '<div class="poll-bar"><div class="poll-bar-fill" style="width:' + pct + '%"></div></div>' : '';
+    var cls = poll.my_vote === i ? 'poll-opt voted' : 'poll-opt';
+    return '<div class="' + cls + '" onclick="votePoll(' + poll.id + ', ' + i + ')">' +
+      '<span>' + escapeHtml(o.option) + '</span>' +
+      (voted ? '<span class="poll-vote-count">' + o.count + ' 票 (' + pct + '%)</span>' : '') +
+      bar + '</div>';
+  }).join('');
+  return '<div class="post-card poll-card" id="poll-' + poll.id + '">' +
+    '<div class="poll-badge">📊 投票</div>' +
+    '<div class="poll-question">' + escapeHtml(poll.question) + '</div>' +
+    '<div class="poll-options">' + optsHtml + '</div>' +
+    '<div class="poll-meta">由 ' + escapeHtml(poll.nickname) + ' 发起 · ' + total + ' 人投票</div>' +
+    '</div>';
+}
+
+function votePoll(pollId, optIndex) {
+  if (!currentUser) { showToast('请先登录', 'error'); return; }
+  fetch('/api/polls/' + pollId + '/vote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ option_index: optIndex })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.error) { showToast(d.error, 'error'); return; }
+    showToast('投票成功！', 'success');
+    loadPolls();
+  }).catch(function(e) { console.log('votePoll:', e); });
 }

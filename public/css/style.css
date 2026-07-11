@@ -661,6 +661,67 @@ body {
 }
 .lightbox-close:hover { transform:scale(1.2); }
 
+/* 在线人数 */
+.online-count {
+  font-size:12px; color:var(--success); display:inline-flex; align-items:center; gap:4px;
+  margin-right:8px; cursor:default;
+}
+
+/* 投票 */
+.poll-form {
+  background:rgba(255,255,255,0.15); backdrop-filter:blur(4px);
+  border-radius:var(--radius-sm); padding:12px; margin-top:8px;
+}
+.poll-option-row {
+  display:flex; gap:8px; margin-bottom:6px; align-items:center;
+}
+.poll-option-row input {
+  flex:1; padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; font-size:14px;
+}
+.poll-opt-remove {
+  color:var(--danger); cursor:pointer; font-size:16px; padding:2px 6px;
+}
+.poll-card {
+  border:2px solid var(--primary-light) !important;
+}
+.poll-badge {
+  font-size:12px; color:var(--primary); margin-bottom:6px; font-weight:600;
+}
+.poll-question {
+  font-size:16px; font-weight:600; margin-bottom:12px; color:var(--text);
+}
+.poll-opt {
+  padding:10px 12px; margin-bottom:8px; border-radius:10px; border:2px solid var(--border-color);
+  cursor:pointer; display:flex; flex-direction:column; gap:4px; transition:0.2s;
+  background:rgba(255,255,255,0.2);
+}
+.poll-opt:hover { border-color:var(--primary); background:rgba(59,130,246,0.08); }
+.poll-opt.voted {
+  border-color:var(--primary); background:rgba(59,130,246,0.1); cursor:default;
+}
+.poll-vote-count {
+  font-size:12px; color:var(--text-secondary);
+}
+.poll-bar {
+  height:6px; background:rgba(0,0,0,0.08); border-radius:3px; overflow:hidden; margin-top:4px;
+}
+.poll-bar-fill {
+  height:100%; background:var(--primary); border-radius:3px; transition:width 0.4s;
+}
+.poll-meta {
+  font-size:12px; color:var(--text-secondary); margin-top:10px; padding-top:8px;
+  border-top:1px solid var(--border-color);
+}
+
+/* 表白墙 */
+.confession-post {
+  border:2px solid #f472b6 !important; background:rgba(244,114,182,0.05) !important;
+}
+.confession-badge {
+  font-size:11px; background:linear-gradient(135deg, #f472b6, #e879f9);
+  color:#fff; padding:2px 8px; border-radius:10px; margin-left:6px; font-weight:600;
+}
+
 /* 响应�?*/
 @media (max-width:900px) {
   .main-content { grid-template-columns:1fr; }

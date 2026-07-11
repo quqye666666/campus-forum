@@ -42,8 +42,14 @@ function requireAuth(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).json({ error: '请先登录' });
   }
+  db.prepare('UPDATE users SET last_active = datetime("now") WHERE id = ?').run(req.session.userId);
   next();
 }
+
+app.get('/api/online', (req, res) => {
+  const count = db.prepare("SELECT COUNT(*) as n FROM users WHERE last_active > datetime('now', '-5 minutes')").get();
+  res.json({ online: count.n });
+});
 
 // ========== 用户相关 API ==========
 
@@ -132,11 +138,18 @@ app.get('/api/sections', (req, res) => {
     SELECT s.*, COUNT(p.id) as post_count
     FROM sections s
     LEFT JOIN posts p ON s.id = p.section_id
+    WHERE s.name NOT IN ('失物招领', '跳蚤市场')
     GROUP BY s.id
     ORDER BY s.id
   `).all();
   res.json(sections);
 });
+
+// 表白墙 section id lookup
+function getConfessionSectionId() {
+  const s = db.prepare("SELECT id FROM sections WHERE name = ?").get('表白墙');
+  return s ? s.id : null;
+}
 
 // ========== 帖子 API ==========
 
@@ -176,6 +189,16 @@ app.get('/api/posts', (req, res) => {
       post.is_liked = !!liked;
       const saved = db.prepare('SELECT 1 FROM saved_posts WHERE post_id = ? AND user_id = ?').get(post.id, req.session.userId);
       post.is_saved = !!saved;
+    }
+  }
+
+  const confessionId = getConfessionSectionId();
+  for (const post of posts) {
+    if (post.section_id === confessionId) {
+      post.nickname = '匿名';
+      post.username = 'anonymous';
+      post.avatar = 'default';
+      post.is_anonymous = true;
     }
   }
 
@@ -552,6 +575,53 @@ app.get('/api/groups', requireAuth, (req, res) => {
     FROM groups_chat g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = ?
   `).all(req.session.userId);
   res.json(groups);
+});
+
+// ========== 投票 API ==========
+
+app.post('/api/polls', requireAuth, (req, res) => {
+  const { question, options } = req.body;
+  if (!question || !options || options.length < 2) {
+    return res.status(400).json({ error: '请输入问题和至少2个选项' });
+  }
+  const result = db.prepare('INSERT INTO polls (creator_id, question, options) VALUES (?, ?, ?)').run(
+    req.session.userId, question, JSON.stringify(options)
+  );
+  res.json({ id: result.lastInsertRowid });
+});
+
+app.get('/api/polls', (req, res) => {
+  const polls = db.prepare(`
+    SELECT p.*, u.nickname FROM polls p JOIN users u ON p.creator_id = u.id
+    ORDER BY p.created_at DESC LIMIT 30
+  `).all();
+  for (const poll of polls) {
+    const options = JSON.parse(poll.options);
+    const votes = options.map((opt, i) => {
+      const c = db.prepare('SELECT COUNT(*) as n FROM poll_votes WHERE poll_id = ? AND option_index = ?').get(poll.id, i);
+      return { option: opt, count: c.n };
+    });
+    poll.options_with_votes = votes;
+    poll.total_votes = votes.reduce((a, b) => a + b.count, 0);
+    if (req.session.userId) {
+      const myVote = db.prepare('SELECT option_index FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(poll.id, req.session.userId);
+      poll.my_vote = myVote ? myVote.option_index : null;
+    }
+  }
+  res.json(polls);
+});
+
+app.post('/api/polls/:id/vote', requireAuth, (req, res) => {
+  const { option_index } = req.body;
+  if (option_index === undefined || option_index === null) {
+    return res.status(400).json({ error: '请选择一个选项' });
+  }
+  const existing = db.prepare('SELECT 1 FROM poll_votes WHERE poll_id = ? AND user_id = ?').get(req.params.id, req.session.userId);
+  if (existing) {
+    return res.status(400).json({ error: '你已经投过票了' });
+  }
+  db.prepare('INSERT INTO poll_votes (poll_id, user_id, option_index) VALUES (?, ?, ?)').run(req.params.id, req.session.userId, option_index);
+  res.json({ success: true });
 });
 
 app.use((err, req, res, next) => {

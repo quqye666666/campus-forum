@@ -120,6 +120,26 @@ db.exec(`
     FOREIGN KEY (receiver_id) REFERENCES users(id),
     FOREIGN KEY (group_id) REFERENCES groups_chat(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS polls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    creator_id INTEGER NOT NULL,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    poll_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    option_index INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(poll_id, user_id),
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
 `);
 
 const userColumns = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
@@ -138,6 +158,9 @@ if (!userColumns.includes('avatar_url')) {
 if (!userColumns.includes('signature')) {
   db.exec('ALTER TABLE users ADD COLUMN signature TEXT DEFAULT ""');
 }
+if (!userColumns.includes('last_active')) {
+  db.exec('ALTER TABLE users ADD COLUMN last_active DATETIME');
+}
 
 const postColumns = db.prepare("PRAGMA table_info(posts)").all().map(c => c.name);
 if (!postColumns.includes('media_type')) {
@@ -154,8 +177,7 @@ const defaultSections = [
   { name: '学习交流', icon: '📚', description: '课程讨论、学习心得' },
   { name: '生活趣事', icon: '🎉', description: '分享校园生活' },
   { name: '活动通知', icon: '📢', description: '社团活动、讲座通知' },
-  { name: '失物招领', icon: '🔍', description: '失物招领信息' },
-  { name: '跳蚤市场', icon: '🛒', description: '二手交易' },
+  { name: '表白墙', icon: '💌', description: '匿名表白、悄悄话' },
   { name: '求职实习', icon: '💼', description: '实习招聘信息' },
   { name: '技术讨论', icon: '💻', description: '编程技术交流' },
 ];
