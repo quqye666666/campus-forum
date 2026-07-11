@@ -455,7 +455,7 @@ function createPoll() {
     inputs.forEach(function(inp) { inp.value = ''; });
     togglePollForm();
     showToast('投票已发布！', 'success');
-    loadPosts();
+    loadPolls();
   }).catch(function(e) { console.log('createPoll:', e); });
 }
 
