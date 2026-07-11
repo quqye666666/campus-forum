@@ -33,7 +33,8 @@ function loadBgList() {
     'Image_1783603484450_589.jpg', 'Image_1783603486629_651.jpg',
     'Image_1783603495726_54.jpg', 'Image_1783603497332_730.jpg'
   ];
-  shuffleBg(); applyBg(); startBgCarousel();
+  bgIndex = Math.floor(Math.random() * bgList.length);
+  applyBg();
 }
 
 function shuffleBg() {
@@ -48,15 +49,6 @@ function applyBg() {
   document.body.style.backgroundImage = 'url(' + url + ')';
   var ap = document.getElementById('authPage');
   if (ap) ap.style.backgroundImage = 'url(' + url + ')';
-}
-
-function startBgCarousel() {
-  if (bgTimer) clearInterval(bgTimer);
-  bgTimer = setInterval(function() {
-    bgIndex = (bgIndex + 1) % bgList.length;
-    if (bgIndex === 0) shuffleBg();
-    applyBg();
-  }, 12000);
 }
 
 /* 按钮涟漪 */
@@ -1063,3 +1055,77 @@ function votePoll(pollId, optIndex) {
     loadPolls();
   }).catch(function(e) { console.log('votePoll:', e); });
 }
+
+/* ========== yzrt 组件交互 ========== */
+
+/* launch start 悬浮按钮 → 打开发帖框并聚焦 */
+function openComposer() {
+  var c = document.querySelector('.post-composer');
+  if (c) {
+    c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var ta = c.querySelector('textarea');
+    if (ta) setTimeout(function() { ta.focus(); }, 350);
+  }
+}
+
+/* 设置弹层 */
+function openSettings() { document.getElementById('settingsModal').classList.add('show'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+
+/* 液态玻璃开关 */
+var glassOn = true;
+function toggleGlass() {
+  glassOn = !glassOn;
+  document.body.classList.toggle('glass-off', !glassOn);
+  document.getElementById('glassToggle').textContent = glassOn ? '开' : '关';
+}
+
+/* Pro 弹窗 */
+function openPro() { document.getElementById('proModal').classList.add('show'); }
+function closePro() { document.getElementById('proModal').classList.remove('show'); }
+
+/* 点击弹层遮罩关闭 */
+document.querySelectorAll('.yzrt-modal').forEach(function(m) {
+  m.addEventListener('click', function(e) { if (e.target === m) m.classList.remove('show'); });
+});
+
+/* 真实拟态旋钮：拖动调节背景模糊度 (0~20px) */
+(function initKnob() {
+  var knob = document.getElementById('blurKnob');
+  if (!knob) return;
+  var handle = knob.querySelector('.knob-handle');
+  var dragging = false, startY = 0, startBlur = 7;
+
+  function setBlur(v) {
+    v = Math.max(0, Math.min(20, v));
+    document.documentElement.style.setProperty('--bg-blur', v + 'px');
+    var ang = -135 + (v / 20) * 270;
+    handle.style.transform = 'rotate(' + ang + 'deg)';
+  }
+  setBlur(7);
+
+  knob.addEventListener('mousedown', function(e) {
+    dragging = true; startY = e.clientY;
+    startBlur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bg-blur')) || 7;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var delta = (startY - e.clientY) / 4;
+    setBlur(startBlur + delta);
+  });
+  window.addEventListener('mouseup', function() { dragging = false; });
+
+  /* 触屏 */
+  knob.addEventListener('touchstart', function(e) {
+    dragging = true; startY = e.touches[0].clientY;
+    startBlur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bg-blur')) || 7;
+  }, { passive: true });
+  window.addEventListener('touchmove', function(e) {
+    if (!dragging) return;
+    var delta = (startY - e.touches[0].clientY) / 4;
+    setBlur(startBlur + delta);
+  }, { passive: true });
+  window.addEventListener('touchend', function() { dragging = false; });
+})();
+
