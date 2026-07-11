@@ -6,7 +6,8 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const db = require('./database');
 
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
+const baseDir = process.env.DATA_DIR || __dirname;
+const uploadsDir = path.join(baseDir, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -35,10 +36,10 @@ app.get('/health', (req, res) => res.send('OK'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(baseDir, 'public', 'uploads')));
 
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, 'public', 'uploads'),
+  destination: uploadsDir,
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
   }
