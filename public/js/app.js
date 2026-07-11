@@ -1129,20 +1129,3 @@ document.querySelectorAll('.yzrt-modal').forEach(function(m) {
   window.addEventListener('touchend', function() { dragging = false; });
 })();
 
-/* 鼠标跟随高光（iOS 26 晶透感关键） */
-(function initCursorSheen() {
-  var sheen = document.getElementById('cursorSheen');
-  if (!sheen) return;
-  var raf = 0;
-  document.addEventListener('mousemove', function(e) {
-    sheen.classList.add('active');
-    sheen.style.setProperty('--mx', (e.clientX / innerWidth * 100) + '%');
-    sheen.style.setProperty('--my', (e.clientY / innerHeight * 100) + '%');
-    clearTimeout(raf);
-    raf = setTimeout(function() { sheen.classList.remove('active'); }, 800);
-  });
-  document.addEventListener('mouseleave', function() {
-    sheen.classList.remove('active');
-  });
-})();
-

@@ -1,168 +1,48 @@
 /* ============================================================
-   iOS 26 晶透液态玻璃系统 v3
-   关键：极低不透明度 + 强镜面高光 + 色散边缘 + 焦散光斑 + 多层叠加
+   iOS 26 晶透液态玻璃 - 性能优化版
+   仅保留：基础层 + 主玻璃层 + 色散边缘
+   移除：焦散动画、鼠标跟随、顶线层、多层叠加
    ============================================================ */
 
-/* ---------- CSS 变量 ---------- */
-:root {
-  --glass-opacity: 0.06;        /* 极薄基底 */
-  --glass-blur: 18px;           // 背景模糊
-  --glass-saturate: 200%;       // 色彩饱和
-  --highlight-opacity: 0.7;     // 镜面高光强度
-  --dispersion: 0.015;          // 色散强度
-}
-
-/* ============================================================
-   1. 多层玻璃背景系统（3 层叠加，z-index 分层）
-   ============================================================ */
+/* ---------- 2 层玻璃 ---------- */
 
 /* 第 1 层：基础磨砂底板 */
 .bg-glass.base {
   position: fixed; inset: 0; z-index: -3; pointer-events: none;
-  backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 4px)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   background:
-    radial-gradient(ellipse 100% 80% at 15% 10%, rgba(255,255,255,0.05), transparent 65%),
-    radial-gradient(ellipse 80% 60% at 90% 90%, rgba(255,255,255,0.03), transparent 60%),
-    rgba(255,255,255, calc(var(--glass-opacity) * 0.5));
+    radial-gradient(ellipse 100% 80% at 15% 10%, rgba(255,255,255,0.04), transparent 65%),
+    radial-gradient(ellipse 80% 60% at 90% 90%, rgba(255,255,255,0.02), transparent 60%),
+    rgba(255,255,255,0.02);
 }
 
-/* 第 2 层：主玻璃层 - 承载高光与色散 */
+/* 第 2 层：主玻璃层 - 承载所有质感 */
 .bg-glass.main {
   position: fixed; inset: 0; z-index: -2; pointer-events: none;
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   background:
-    /* 极薄珠光膜 */
     linear-gradient(135deg,
-      rgba(255,255,255,0.02) 0%,
-      rgba(255,255,255,0.06) 25%,
-      rgba(255,255,255,0.02) 50%,
-      rgba(255,255,255,0.05) 75%,
+      rgba(255,255,255,0.015) 0%,
+      rgba(255,255,255,0.05) 25%,
+      rgba(255,255,255,0.015) 50%,
+      rgba(255,255,255,0.04) 75%,
       transparent 100%
     ),
-    rgba(255,255,255, calc(var(--glass-opacity) * 0.8));
+    rgba(255,255,255,0.04);
+  /* 核心镜面高光：顶部 1px 0.85 + 次级 2px 0.35 + 底部倒影 + 内发光 */
   box-shadow:
-    /* 顶部镜面高光 - 最关键的一笔 */
-    inset 0 1px 0 rgba(255,255,255, calc(var(--highlight-opacity) * 0.9)),
-    inset 0 2px 0 rgba(255,255,255, calc(var(--highlight-opacity) * 0.4)),
-    /* 底部倒影 */
-    inset 0 -1px 0 rgba(255,255,255, 0.15),
-    /* 深度感 */
-    inset 0 0 200px rgba(255,255,255, 0.03);
-}
-
-/* 第 3 层：色散边缘层 - 模拟棱镜色散 */
-.bg-glass.dispersion {
-  position: fixed; inset: -2px; z-index: -1; pointer-events: none;
-  overflow: hidden;
-}
-.bg-glass.dispersion::before,
-.bg-glass.dispersion::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  /* 红/蓝色散边缘 - 仅 1px 宽度 */
-  background:
-    linear-gradient(90deg,
-      rgba(255,80,80, var(--dispersion)) 0%,
-      transparent 1px,
-      transparent calc(100% - 1px),
-      rgba(80,120,255, var(--dispersion)) 100%
-    ),
-    linear-gradient(180deg,
-      rgba(255,100,100, var(--dispersion)) 0%,
-      transparent 1px,
-      transparent calc(100% - 1px),
-      rgba(100,100,255, var(--dispersion)) 100%
-    );
-  pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.6;
-}
-
-/* 第 4 层：动态焦散光斑 */
-.bg-glass.caustics {
-  position: fixed; inset: -40%; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(255,255,255,0.12), transparent 70%),
-    radial-gradient(ellipse 50% 30% at 70% 80%, rgba(255,255,255,0.08), transparent 65%),
-    radial-gradient(circle 20% at 50% 50%, rgba(255,255,255,0.15), transparent 80%);
-  filter: blur(80px);
-  opacity: 0;
-  animation: causticsDrift 20s ease-in-out infinite;
-}
-@keyframes causticsDrift {
-  0%   { opacity: 0.35; transform: translate(-5%, -3%) scale(1) rotate(0deg); }
-  25%  { opacity: 0.5;  transform: translate(3%, 5%) scale(1.05) rotate(2deg); }
-  50%  { opacity: 0.4;  transform: translate(-2%, -4%) scale(0.98) rotate(-1deg); }
-  75%  { opacity: 0.45; transform: translate(4%, -2%) scale(1.03) rotate(1deg); }
-  100% { opacity: 0.35; transform: translate(-5%, -3%) scale(1) rotate(0deg); }
-}
-
-/* 第 5 层：极薄顶部高光线（全局最亮的那条线） */
-.bg-glass.top-line {
-  position: fixed; top: 0; left: 0; right: 0; height: 1px; z-index: 1; pointer-events: none;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255,255,255,0.9) 10%,
-    rgba(255,255,255,0.6) 50%,
-    rgba(255,255,255,0.9) 90%,
-    transparent 100%
-  );
-  filter: blur(0.5px);
-  opacity: 0.8;
-}
-
-/* 鼠标跟随高光（JS 控制） */
-.bg-glass.cursor-sheen {
-  position: fixed; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(ellipse 40% 30% at var(--mx, 50%) var(--my, 50%),
-    rgba(255,255,255,0.18), transparent 70%);
-  filter: blur(40px);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.bg-glass.cursor-sheen.active { opacity: 1; }
-
-/* 关闭玻璃态 */
-body.glass-off .bg-glass { display: none !important; }
-
-/* ============================================================
-   2. 通用玻璃 mixin：卡片/面板/弹层/顶栏/登录卡
-   ============================================================ */
-.glass,
-.post-composer,
-.panel-card,
-.yzrt-modal-card,
-.auth-card,
-.user-dropdown,
-.topbar,
-.chat-bubble {
-  position: relative;
-  isolation: isolate; /* 创建新的堆叠上下文 */
-  background:
-    /* 极薄底色 */
-    rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(20px) saturate(220%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(220%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow:
-    /* 外投影 */
-    0 1px 3px rgba(0,0,0,0.04),
-    0 8px 24px rgba(0,0,0,0.03),
-    /* 内部多层高光 - 核心晶透感 */
     inset 0 1px 0 rgba(255,255,255,0.85),
     inset 0 2px 0 rgba(255,255,255,0.35),
-    inset 0 -1px 0 rgba(255,255,255,0.18),
-    inset 1px 0 0 rgba(255,255,255,0.35),
-    inset -1px 0 0 rgba(255,255,255,0.2);
-}::before {
+    inset 0 -1px 0 rgba(255,255,255,0.15),
+    inset 0 0 120px rgba(255,255,255,0.02);
+}
+
+/* 色散边缘 - 依附主层，红/蓝各 1px，screen 混合 */
+.bg-glass.main::before {
   content: '';
   position: absolute; inset: -1px;
-  border-radius: inherit;
-  /* 色散边缘：红蓝各 1px */
   background:
     linear-gradient(90deg,
       rgba(255,60,60,0.35) 0%, transparent 1px,
@@ -174,29 +54,89 @@ body.glass-off .bg-glass { display: none !important; }
     );
   pointer-events: none;
   mix-blend-mode: screen;
-  z-index: -1;
-  opacity: 0.7;
+  opacity: 0.6;
 }
-::after {
+
+/* 关闭玻璃 */
+body.glass-off .bg-glass { display: none !important; }
+
+/* ============================================================
+   通用玻璃 mixin：卡片/面板/弹层/顶栏/登录卡
+   ============================================================ */
+.glass,
+.post-composer,
+.panel-card,
+.yzrt-modal-card,
+.auth-card,
+.user-dropdown,
+.topbar,
+.chat-bubble {
+  position: relative;
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(18px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.03),
+    0 6px 18px rgba(0,0,0,0.025),
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 2px 0 rgba(255,255,255,0.3),
+    inset 0 -1px 0 rgba(255,255,255,0.12),
+    inset 1px 0 0 rgba(255,255,255,0.28),
+    inset -1px 0 0 rgba(255,255,255,0.16);
+}
+.glass::before,
+.post-composer::before,
+.panel-card::before,
+.yzrt-modal-card::before,
+.auth-card::before,
+.user-dropdown::before,
+.topbar::before,
+.chat-bubble::before {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg,
+      rgba(255,60,60,0.3) 0%, transparent 1px,
+      transparent calc(100% - 1px), rgba(60,100,255,0.3) 100%
+    ),
+    linear-gradient(180deg,
+      rgba(255,80,80,0.2) 0%, transparent 1px,
+      transparent calc(100% - 1px), rgba(80,80,255,0.2) 100%
+    );
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: -1;
+  opacity: 0.6;
+}
+.glass::after,
+.post-composer::after,
+.panel-card::after,
+.yzrt-modal-card::after,
+.auth-card::after,
+.user-dropdown::after,
+.topbar::after,
+.chat-bubble::after {
   content: '';
   position: absolute; inset: 0;
   border-radius: inherit;
-  /* 顶部极薄高光线 */
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.6) 0%,
-    rgba(255,255,255,0.25) 1px,
-    transparent 3px
+    rgba(255,255,255,0.55) 0%,
+    rgba(255,255,255,0.2) 1px,
+    transparent 2px
   );
   pointer-events: none;
   z-index: 1;
 }
 
 /* 强制覆盖原有背景 */
-.post-composer { background: rgba(255,255,255,0.12) !important; }
-.panel-card { background: rgba(255,255,255,0.12) !important; }
-.yzrt-modal-card { background: rgba(255,255,255,0.14) !important; }
-.auth-card { background: rgba(255,255,255,0.14) !important; }
-.user-dropdown { background: rgba(255,255,255,0.18) !important; }
+.post-composer { background: rgba(255,255,255,0.14) !important; }
+.panel-card { background: rgba(255,255,255,0.14) !important; }
+.yzrt-modal-card { background: rgba(255,255,255,0.16) !important; }
+.auth-card { background: rgba(255,255,255,0.16) !important; }
+.user-dropdown { background: rgba(255,255,255,0.2) !important; }
 .topbar { background: rgba(255,255,255,0.1) !important; }
 
 /* ============================================================
@@ -204,26 +144,26 @@ body.glass-off .bg-glass { display: none !important; }
    ============================================================ */
 .topbar .search-box {
   display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.22);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.24);
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 999px;
   padding: 4px 6px 4px 16px;
   width: 340px;
-  backdrop-filter: blur(24px) saturate(250%);
-  -webkit-backdrop-filter: blur(24px) saturate(250%);
+  backdrop-filter: blur(22px) saturate(220%);
+  -webkit-backdrop-filter: blur(22px) saturate(220%);
   box-shadow:
-    0 1px 2px rgba(0,0,0,0.03),
-    inset 0 1px 0 rgba(255,255,255,0.7),
-    inset 0 -1px 0 rgba(255,255,255,0.15);
-  transition: 0.3s var(--ease);
+    0 1px 2px rgba(0,0,0,0.02),
+    inset 0 1px 0 rgba(255,255,255,0.65),
+    inset 0 -1px 0 rgba(255,255,255,0.12);
+  transition: 0.25s var(--ease);
 }
 .topbar .search-box:focus-within {
-  background: rgba(255,255,255,0.38);
-  border-color: rgba(0,122,255,0.4);
+  background: rgba(255,255,255,0.4);
+  border-color: rgba(0,122,255,0.35);
   box-shadow:
-    0 2px 10px rgba(0,122,255,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.9),
-    inset 0 -1px 0 rgba(255,255,255,0.2);
+    0 2px 8px rgba(0,122,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -1px 0 rgba(255,255,255,0.18);
 }
 .topbar .search-box input { border:none; background:transparent; outline:none; font-size:14px; width:100%; padding:4px 0; }
 .topbar .search-btn {
@@ -241,40 +181,40 @@ body.glass-off .bg-glass { display: none !important; }
    ============================================================ */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
-  border: 1px solid rgba(255,255,255,0.3) !important;
+  border: 1px solid rgba(255,255,255,0.28) !important;
   border-radius: var(--radius-sm) !important;
   box-shadow:
-    0 2px 6px rgba(0,122,255,0.18),
-    0 8px 20px rgba(0,122,255,0.1),
-    inset 0 1px 0 rgba(255,255,255,0.7),
-    inset 0 -1px 0 rgba(0,0,0,0.08) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    0 2px 5px rgba(0,122,255,0.15),
+    0 6px 16px rgba(0,122,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.65),
+    inset 0 -1px 0 rgba(0,0,0,0.06) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .btn-primary:hover {
   box-shadow:
-    0 4px 12px rgba(0,122,255,0.22),
-    0 12px 28px rgba(0,122,255,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.8),
-    inset 0 -1px 0 rgba(0,0,0,0.08) !important;
+    0 3px 8px rgba(0,122,255,0.18),
+    0 10px 22px rgba(0,122,255,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.75),
+    inset 0 -1px 0 rgba(0,0,0,0.06) !important;
 }
 .btn-primary:active {
   transform: translateY(0) scale(0.97);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: inset 0 2px 3px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35);
 }
 .btn-outline {
   background: rgba(255,255,255,0.18) !important;
-  border: 1px solid rgba(255,255,255,0.25) !important;
+  border: 1px solid rgba(255,255,255,0.22) !important;
   color: var(--text);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
 }
 .btn-outline:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(0,122,255,0.06) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px rgba(0,122,255,0.08);
+  background: rgba(0,122,255,0.05) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 6px rgba(0,122,255,0.06);
 }
 
 /* ============================================================
@@ -285,18 +225,13 @@ body.glass-off .bg-glass { display: none !important; }
   border-left: none;
   border-radius: 10px;
   padding: 10px 12px;
-  transition: all 0.22s var(--ease);
+  transition: all 0.2s var(--ease);
 }
-.sidebar-nav .nav-item:hover {
-  background: rgba(255,255,255,0.25);
-  padding-left: 12px;
-}
+.sidebar-nav .nav-item:hover { background: rgba(255,255,255,0.22); padding-left: 12px; }
 .sidebar-nav .nav-item.active {
-  background: linear-gradient(135deg, rgba(0,122,255,0.2), rgba(88,86,214,0.2));
+  background: linear-gradient(135deg, rgba(0,122,255,0.18), rgba(88,86,214,0.18));
   color: var(--primary); font-weight: 600;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.5),
-    0 2px 6px rgba(0,122,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 5px rgba(0,122,255,0.08);
 }
 .sidebar-nav .nav-item.active .icon { transform: scale(1.1); }
 .sidebar-nav .nav-item.active .count { background: rgba(0,122,255,0.22); color: var(--primary); }
@@ -505,7 +440,7 @@ body.glass-off .bg-glass { display: none !important; }
 .yzrt-modal.show { display:flex; }
 .yzrt-modal-card {
   width: 320px; max-width:90vw;
-  background: rgba(255,255,255,0.14) !important;
+  background: rgba(255,255,255,0.16) !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
   border: 1px solid rgba(255,255,255,0.18) !important;
