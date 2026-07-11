@@ -16,13 +16,6 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-app.get('/health', (req, res) => res.send('OK'));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-
 app.use(session({
   secret: process.env.SESSION_SECRET || 'campus-forum-dev-secret',
   resave: false,
@@ -36,6 +29,13 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.get('/health', (req, res) => res.send('OK'));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 const storage = multer.diskStorage({
   destination: path.join(__dirname, 'public', 'uploads'),

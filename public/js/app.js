@@ -248,12 +248,11 @@ function selectSection(sid) {
   document.getElementById('postsList').innerHTML = '';
   document.getElementById('pollsContainer').innerHTML = '';
   if (sid === -1) {
-    document.getElementById('postsList').style.display = 'none';
     document.getElementById('loadingMore').style.display = 'none';
     document.getElementById('postComposer').style.display = 'none';
     loadPolls();
   } else {
-    document.getElementById('postsList').style.display = '';
+    document.getElementById('loadingMore').style.display = '';
     document.getElementById('postComposer').style.display = '';
     loadPosts();
   }
