@@ -668,6 +668,12 @@ body {
 }
 
 /* 投票 */
+.nav-divider {
+  height:1px; background:var(--border-color); margin:8px 12px;
+}
+.nav-poll {
+  color:var(--primary); font-weight:600;
+}
 .poll-form {
   background:rgba(255,255,255,0.15); backdrop-filter:blur(4px);
   border-radius:var(--radius-sm); padding:12px; margin-top:8px;

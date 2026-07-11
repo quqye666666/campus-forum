@@ -173,6 +173,8 @@ function showMainPage() {
   document.getElementById('searchPage').style.display = 'none';
   document.getElementById('profilePage').style.display = 'none';
   document.getElementById('postComposer').style.display = '';
+  document.getElementById('postsList').style.display = '';
+  document.getElementById('loadingMore').style.display = '';
   currentPage = 1;
   hasMorePosts = true;
   loadPosts();
@@ -244,7 +246,17 @@ function selectSection(sid) {
   hasMorePosts = true;
   document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.toggle('active', el.dataset.section == sid); });
   document.getElementById('postsList').innerHTML = '';
-  loadPosts();
+  document.getElementById('pollsContainer').innerHTML = '';
+  if (sid === -1) {
+    document.getElementById('postsList').style.display = 'none';
+    document.getElementById('loadingMore').style.display = 'none';
+    document.getElementById('postComposer').style.display = 'none';
+    loadPolls();
+  } else {
+    document.getElementById('postsList').style.display = '';
+    document.getElementById('postComposer').style.display = '';
+    loadPosts();
+  }
   showMainPageHiddenParts();
 }
 
@@ -1009,10 +1021,13 @@ function removePollOption(el) {
 
 function loadPolls() {
   fetch('/api/polls').then(function(r) { return r.json(); }).then(function(polls) {
-    var container = document.getElementById('pollsContainer');
-    if (!container) return;
-    if (!polls.length) { container.innerHTML = ''; return; }
-    container.innerHTML = polls.map(function(p) { return buildPollCard(p); }).join('');
+    var target = currentSection === -1 ? document.getElementById('postsList') : document.getElementById('pollsContainer');
+    if (!target) return;
+    if (!polls.length) {
+      target.innerHTML = currentSection === -1 ? '<div class="empty-state"><div class="empty-icon">&#128202;</div><div class="empty-text">暂无投票</div></div>' : '';
+      return;
+    }
+    target.innerHTML = polls.map(function(p) { return buildPollCard(p); }).join('');
   }).catch(function(e) { console.log('loadPolls:', e); });
 }
 

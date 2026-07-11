@@ -30,6 +30,13 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
+app.use((req, res, next) => {
+  if (req.session.userId) {
+    db.prepare('UPDATE users SET last_active = datetime("now") WHERE id = ?').run(req.session.userId);
+  }
+  next();
+});
+
 const storage = multer.diskStorage({
   destination: path.join(__dirname, 'public', 'uploads'),
   filename: (req, file, cb) => {
@@ -42,7 +49,6 @@ function requireAuth(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).json({ error: '请先登录' });
   }
-  db.prepare('UPDATE users SET last_active = datetime("now") WHERE id = ?').run(req.session.userId);
   next();
 }
 
