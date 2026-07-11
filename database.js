@@ -186,4 +186,14 @@ for (const s of defaultSections) {
   insertSection.run(s.name, s.icon, s.description);
 }
 
+const removedSections = ['求职实习', '失物招领', '跳蚤市场'];
+for (const name of removedSections) {
+  const s = db.prepare('SELECT id FROM sections WHERE name=?').get(name);
+  if (s) {
+    const n = db.prepare('SELECT COUNT(*) c FROM posts WHERE section_id=?').get(s.id);
+    if (n.c > 0) db.prepare('UPDATE posts SET section_id=1 WHERE section_id=?').run(s.id);
+    db.prepare('DELETE FROM sections WHERE id=?').run(s.id);
+  }
+}
+
 module.exports = db;
