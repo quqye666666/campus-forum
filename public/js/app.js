@@ -1072,14 +1072,6 @@ function openComposer() {
 function openSettings() { document.getElementById('settingsModal').classList.add('show'); }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
 
-/* 液态玻璃开关 */
-var glassOn = true;
-function toggleGlass() {
-  glassOn = !glassOn;
-  document.body.classList.toggle('glass-off', !glassOn);
-  document.getElementById('glassToggle').textContent = glassOn ? '开' : '关';
-}
-
 /* Pro 弹窗 */
 function openPro() { document.getElementById('proModal').classList.add('show'); }
 function closePro() { document.getElementById('proModal').classList.remove('show'); }

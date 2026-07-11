@@ -9,13 +9,6 @@
   <link rel="stylesheet" href="/css/yzrt.css">
 </head>
 <body>
-  <!-- iOS 26 晶透液态玻璃 4 层 -->
-  <div class="bg-glass base"></div>
-  <div class="bg-glass main"></div>
-  <div class="bg-glass dispersion"></div>
-  <div class="bg-glass caustics"></div>
-  <div class="bg-glass top-line"></div>
-
   <!-- CSS水滴 装饰 blob -->
   <div class="water-drop-blob"></div>
   <div class="water-drop-blob alt"></div>
@@ -26,16 +19,12 @@
       <div class="yzrt-modal-title">外观设置</div>
       <div class="yzrt-setting-row">
         <span>背景模糊度</span>
-        <div class="knob-wrap">
-          <div class="yzrt-knob" id="blurKnob" title="拖动调节模糊">
-            <div class="knob-handle"><span class="knob-dot"></span></div>
-          </div>
+<div class="knob-wrap">
+        <div class="yzrt-knob" id="blurKnob" title="拖动调节模糊">
+          <div class="knob-handle"><span class="knob-dot"></span></div>
         </div>
       </div>
-      <div class="yzrt-setting-row">
-        <span>液态玻璃强度</span>
-        <button class="neo-btn" id="glassToggle" onclick="toggleGlass()">开</button>
-      </div>
+    </div>
       <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="closeSettings()">完成</button>
     </div>
   </div>
