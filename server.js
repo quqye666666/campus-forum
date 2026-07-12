@@ -35,7 +35,12 @@ app.get('/health', (req, res) => res.send('OK'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: 0,
+  etag: false,
+  lastModified: false,
+  setHeaders: function(res) { res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); }
+}));
 app.use('/uploads', express.static(path.join(baseDir, 'public', 'uploads')));
 
 const storage = multer.diskStorage({
@@ -77,7 +82,6 @@ function verifyCode(email, code) {
   return !!row;
 }
 
-const nodemailer = require('nodemailer');
 const QQ_SENDER = '3110735899@qq.com';
 const QQ_AUTH = process.env.QQ_EMAIL_AUTH || process.env.qqname || '';
 
@@ -86,6 +90,9 @@ function sendCodeEmail(email, code) {
     console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
     return Promise.resolve(false);
   }
+  let nodemailer;
+  try { nodemailer = require('nodemailer'); }
+  catch (e) { console.error('nodemailer 未安装，无法发送邮件'); return Promise.resolve(false); }
   const transporter = nodemailer.createTransport({
     host: 'smtp.qq.com',
     port: 465,

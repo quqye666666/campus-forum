@@ -121,7 +121,11 @@ function handleLogin(e) {
         err.style.display = 'block';
         if (loginMode === 'code') refreshCaptcha('login');
       }
-    }).catch(function(e) { console.log('login:', e); });
+    }).catch(function(e) {
+      console.log('login:', e);
+      err.textContent = '网络错误，请检查服务是否正常运行';
+      err.style.display = 'block';
+    });
   return false;
 }
 
@@ -158,7 +162,11 @@ function handleRegister(e) {
         err.style.display = 'block';
         refreshCaptcha('register');
       }
-    }).catch(function(e) { console.log('register:', e); });
+    }).catch(function(e) {
+      console.log('register:', e);
+      err.textContent = '网络错误，请检查服务是否正常运行';
+      err.style.display = 'block';
+    });
   return false;
 }
 
@@ -195,7 +203,11 @@ function sendCode(kind) {
       else showToast('验证码已发送', 'success');
       startCodeCountdown(kind);
       refreshCaptcha(kind);
-    }).catch(function(e) { console.log('send-code:', e); });
+    }).catch(function(e) {
+      console.log('send-code:', e);
+      err.textContent = '网络错误，请检查服务是否正常运行';
+      err.style.display = 'block';
+    });
 }
 
 function refreshCaptcha(kind) {
