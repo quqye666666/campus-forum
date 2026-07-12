@@ -172,6 +172,24 @@ if (!msgColumns.includes('is_read')) {
   db.exec('ALTER TABLE messages ADD COLUMN is_read INTEGER DEFAULT 0');
 }
 
+if (!userColumns.includes('phone')) {
+  db.exec('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ""');
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sms_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NULL").all();
+empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
+
 const defaultSections = [
   { name: '校园动态', icon: '🏫', description: '校园热门动态' },
   { name: '学习交流', icon: '📚', description: '课程讨论、学习心得' },

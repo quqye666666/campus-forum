@@ -60,33 +60,116 @@ app.get('/api/online', (req, res) => {
 
 // ========== 用户相关 API ==========
 
+function genSMSCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function phoneValid(phone) {
+  return /^1[3-9]\d{9}$/.test(phone || '');
+}
+
+function nameValid(name) {
+  return typeof name === 'string' && /^[\u4e00-\u9fa5a-zA-Z]{2,20}$/.test(name);
+}
+
+function verifySMSCode(phone, code) {
+  const row = db.prepare("SELECT * FROM sms_codes WHERE phone = ? AND code = ? AND expires_at > datetime('now')").get(phone, code);
+  return !!row;
+}
+
+/* ========== 图形验证码（人机验证） ========== */
+function rndColor(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+function randomCaptchaText(len) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let s = '';
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+function makeCaptchaSVG(text) {
+  const w = 120, h = 40;
+  let noise = '';
+  for (let i = 0; i < 4; i++) {
+    const x1 = (Math.random() * w).toFixed(1), y1 = (Math.random() * h).toFixed(1);
+    const x2 = (Math.random() * w).toFixed(1), y2 = (Math.random() * h).toFixed(1);
+    noise += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgb(${rndColor(0,255)},${rndColor(0,255)},${rndColor(0,255)})" stroke-width="1" opacity="0.5"/>`;
+  }
+  for (let i = 0; i < 24; i++) {
+    noise += `<circle cx="${(Math.random() * w).toFixed(1)}" cy="${(Math.random() * h).toFixed(1)}" r="1" fill="rgb(${rndColor(0,255)},${rndColor(0,255)},${rndColor(0,255)})" opacity="0.5"/>`;
+  }
+  let chars = '';
+  const n = text.length;
+  for (let i = 0; i < n; i++) {
+    const x = (12 + i * (w - 20) / n + (Math.random() * 6 - 3)).toFixed(1);
+    const y = (28 + (Math.random() * 6 - 3)).toFixed(1);
+    const size = (22 + Math.random() * 8).toFixed(1);
+    const rot = (Math.random() * 40 - 20).toFixed(1);
+    const c = `rgb(${rndColor(0,160)},${rndColor(0,160)},${rndColor(0,160)})`;
+    chars += `<text x="${x}" y="${y}" font-size="${size}" fill="${c}" font-family="Arial" font-weight="bold" transform="rotate(${rot} ${x} ${y})">${text[i]}</text>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="#f2f2f7"/>${noise}${chars}</svg>`;
+}
+
+app.get('/api/captcha', (req, res) => {
+  const type = req.query.type === 'register' ? 'register' : 'login';
+  const text = randomCaptchaText(4);
+  req.session['captcha_' + type] = text.toLowerCase();
+  res.type('image/svg+xml').send(makeCaptchaSVG(text));
+});
+
+app.post('/api/send-code', (req, res) => {
+  const { phone, captcha, type } = req.body;
+  const ck = 'captcha_' + (type === 'register' ? 'register' : 'login');
+  if (!req.session[ck] || req.session[ck] !== (captcha || '').toLowerCase()) {
+    return res.status(400).json({ error: '图形验证码错误' });
+  }
+  req.session[ck] = null;
+  if (!phoneValid(phone)) {
+    return res.status(400).json({ error: '请输入正确的手机号' });
+  }
+  const code = genSMSCode();
+  db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(phone);
+  db.prepare("INSERT INTO sms_codes (phone, code, expires_at) VALUES (?, ?, datetime('now', '+5 minutes'))").run(phone, code);
+  if (!process.env.SMS_API_KEY) {
+    console.log('[DEV] 短信验证码 ' + phone + ' => ' + code);
+    return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式）' });
+  }
+  res.json({ ok: true, message: '验证码已发送' });
+});
+
 app.post('/api/register', (req, res) => {
-  const { username, password, nickname } = req.body;
-  if (!username || !password || !nickname) {
-    return res.status(400).json({ error: '请填写所有必填字段' });
+  const { phone, code, name } = req.body;
+  if (!phoneValid(phone)) return res.status(400).json({ error: '请输入正确的手机号' });
+  if (!nameValid(name)) return res.status(400).json({ error: '用户名须为2-20位中英文，不能含数字或特殊符号' });
+  if (!code) return res.status(400).json({ error: '请输入验证码' });
+  if (db.prepare('SELECT id FROM users WHERE username = ?').get(name)) {
+    return res.status(400).json({ error: '该用户名已被占用' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: '密码至少6位' });
+  if (db.prepare('SELECT id FROM users WHERE phone = ?').get(phone)) {
+    return res.status(400).json({ error: '该手机号已注册，请直接登录' });
   }
+  if (!verifySMSCode(phone, code)) return res.status(400).json({ error: '验证码错误或已过期' });
   try {
-    const hashed = bcrypt.hashSync(password, 10);
-    const result = db.prepare('INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)').run(username, hashed, nickname);
+    const hashed = bcrypt.hashSync(Math.random().toString(36), 10);
+    const result = db.prepare('INSERT INTO users (username, password, nickname, phone) VALUES (?, ?, ?, ?)').run(name, hashed, name, phone);
+    db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(phone);
     req.session.userId = result.lastInsertRowid;
-    res.json({ id: result.lastInsertRowid, username, nickname, avatar: 'default' });
+    res.json({ id: result.lastInsertRowid, username: name, nickname: name, avatar: 'default' });
   } catch (e) {
-    if (e.message.includes('UNIQUE')) {
-      return res.status(400).json({ error: '用户名已存在' });
-    }
+    if (e.message.includes('UNIQUE')) return res.status(400).json({ error: '该用户名或手机号已被占用' });
     res.status(500).json({ error: '注册失败' });
   }
 });
 
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-  if (!user || !bcrypt.compareSync(password, user.password)) {
-    return res.status(400).json({ error: '用户名或密码错误' });
-  }
+  const { phone, code } = req.body;
+  if (!phoneValid(phone)) return res.status(400).json({ error: '请输入正确的手机号' });
+  if (!code) return res.status(400).json({ error: '请输入验证码' });
+  const user = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
+  if (!user) return res.status(400).json({ error: '该手机号尚未注册，请先注册' });
+  if (!verifySMSCode(phone, code)) return res.status(400).json({ error: '验证码错误或已过期' });
+  db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(phone);
   req.session.userId = user.id;
   res.json({ id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, school: user.school, bio: user.bio });
 });

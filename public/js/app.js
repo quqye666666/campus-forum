@@ -79,17 +79,18 @@ function switchAuthTab(tab) {
   document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
   document.getElementById('loginError').style.display = 'none';
   document.getElementById('regError').style.display = 'none';
+  refreshCaptcha(tab);
 }
 
 function handleLogin(e) {
   e.preventDefault();
-  var u = document.getElementById('loginUsername').value;
-  var p = document.getElementById('loginPassword').value;
+  var phone = document.getElementById('loginPhone').value.trim();
+  var code = document.getElementById('loginCode').value.trim();
   var err = document.getElementById('loginError');
   fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: u, password: p })
+    body: JSON.stringify({ phone: phone, code: code })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -108,14 +109,19 @@ function handleLogin(e) {
 
 function handleRegister(e) {
   e.preventDefault();
-  var u = document.getElementById('regUsername').value;
-  var p = document.getElementById('regPassword').value;
-  var n = document.getElementById('regNickname').value;
+  var phone = document.getElementById('regPhone').value.trim();
+  var name = document.getElementById('regName').value.trim();
+  var code = document.getElementById('regCode').value.trim();
   var err = document.getElementById('regError');
+  if (!/^[\u4e00-\u9fa5a-zA-Z]{2,20}$/.test(name)) {
+    err.textContent = '用户名须为2-20位中英文，不能含数字或特殊符号';
+    err.style.display = 'block';
+    return false;
+  }
   fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: u, password: p, nickname: n })
+    body: JSON.stringify({ phone: phone, code: code, name: name })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -127,9 +133,69 @@ function handleRegister(e) {
       } else {
         err.textContent = r.data.error;
         err.style.display = 'block';
+        refreshCaptcha('register');
       }
     }).catch(function(e) { console.log('register:', e); });
   return false;
+}
+
+var codeTimers = {};
+function sendCode(kind) {
+  var phoneInput = document.getElementById(kind === 'login' ? 'loginPhone' : 'regPhone');
+  var phone = (phoneInput.value || '').trim();
+  var captcha = document.getElementById(kind + 'Captcha').value.trim();
+  var err = document.getElementById(kind === 'login' ? 'loginError' : 'regError');
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    err.textContent = '请输入正确的手机号';
+    err.style.display = 'block';
+    return;
+  }
+  if (!captcha) {
+    err.textContent = '请输入图形验证码';
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  fetch('/api/send-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone, captcha: captcha, type: kind })
+  }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(r) {
+      if (!r.ok) {
+        err.textContent = r.data.error;
+        err.style.display = 'block';
+        refreshCaptcha(kind);
+        return;
+      }
+      if (r.data.devCode) showToast('验证码：' + r.data.devCode + '（开发模式）', 'success');
+      else showToast('验证码已发送', 'success');
+      startCodeCountdown(kind);
+      refreshCaptcha(kind);
+    }).catch(function(e) { console.log('send-code:', e); });
+}
+
+function refreshCaptcha(kind) {
+  var img = document.getElementById(kind + 'CaptchaImg');
+  if (img) img.src = '/api/captcha?type=' + kind + '&t=' + Date.now();
+}
+
+function startCodeCountdown(kind) {
+  var btn = document.getElementById(kind === 'login' ? 'loginSendBtn' : 'regSendBtn');
+  var left = 60;
+  btn.disabled = true;
+  btn.textContent = left + 's';
+  if (codeTimers[kind]) clearInterval(codeTimers[kind]);
+  codeTimers[kind] = setInterval(function() {
+    left--;
+    if (left <= 0) {
+      clearInterval(codeTimers[kind]);
+      btn.disabled = false;
+      btn.textContent = '获取验证码';
+    } else {
+      btn.textContent = left + 's';
+    }
+  }, 1000);
 }
 
 function handleLogout() {
@@ -1094,7 +1160,7 @@ document.querySelectorAll('.yzrt-modal').forEach(function(m) {
     var ang = -135 + (v / 20) * 270;
     handle.style.transform = 'rotate(' + ang + 'deg)';
   }
-  setBlur(7);
+   setBlur(0);
 
   knob.addEventListener('mousedown', function(e) {
     dragging = true; startY = e.clientY;
