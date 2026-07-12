@@ -66,6 +66,33 @@ app.get('/api/online', (req, res) => {
   res.json({ online: count.n });
 });
 
+// 临时网络探测：确认 Railway 出网是否放行 SMTP 端口
+app.get('/api/netcheck', (req, res) => {
+  const net = require('net');
+  const targets = [
+    { h: 'smtp.qq.com', p: 465 },
+    { h: 'smtp.qq.com', p: 587 },
+    { h: 'smtp.qq.com', p: 25 },
+    { h: 'example.com', p: 443 }
+  ];
+  const results = {};
+  let pending = targets.length;
+  targets.forEach((t) => {
+    const s = new net.Socket();
+    let done = false;
+    const finish = (ok, info) => {
+      if (done) return; done = true;
+      results[t.h + ':' + t.p] = ok ? 'OK' : ('FAIL ' + (info && info.message ? info.message : info));
+      try { s.destroy(); } catch (e) {}
+      pending -= 1;
+      if (pending === 0) res.json(results);
+    };
+    s.setTimeout(5000, () => finish(false, 'timeout'));
+    s.on('error', (e) => finish(false, e.code || e.message));
+    s.connect(t.p, t.h, () => finish(true));
+  });
+});
+
 // ========== 用户相关 API ==========
 
 function genCode() {
