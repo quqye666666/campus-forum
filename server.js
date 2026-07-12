@@ -91,11 +91,11 @@ const QQ_AUTH = process.env.QQ_EMAIL_AUTH || process.env.qqname || '';
 function sendCodeEmail(email, code) {
   if (!QQ_AUTH) {
     console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
-    return Promise.resolve(false);
+    return Promise.resolve({ error: 'QQ_AUTH 未设置（开发模式）' });
   }
   let nodemailer;
   try { nodemailer = require('nodemailer'); }
-  catch (e) { console.error('nodemailer 未安装，无法发送邮件'); return Promise.resolve(false); }
+  catch (e) { console.error('nodemailer 未安装，无法发送邮件'); return Promise.resolve({ error: 'nodemailer 未安装: ' + e.message }); }
   const transporter = nodemailer.createTransport({
     host: 'smtp.qq.com',
     port: 465,
@@ -111,7 +111,7 @@ function sendCodeEmail(email, code) {
     subject: '邮箱验证码',
     text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
     html: '<p>您的验证码是：<b>' + code + '</b></p><p>5分钟内有效，请勿泄露给他人。</p>'
-  }).then(function() { return true; }).catch(function(e) { throw e; });
+  }).then(function() { return true; }).catch(function(e) { return { error: String((e && e.message) || e) }; });
 }
 
 /* ========== 图形验证码（人机验证） ========== */
@@ -173,20 +173,17 @@ app.post('/api/send-code', (req, res) => {
     new Promise(function(r) { setTimeout(function() { r(false); }, 8000); })
   ]) : Promise.resolve(false);
 
-  doSend.then(function(sent) {
-    if (sent === true) {
+  doSend.then(function(r) {
+    if (r === true) {
       return res.json({ ok: true, message: '验证码已发送' });
     }
-    console.error('[WARN] 邮件发送失败，回退返回验证码供使用');
-    var info = { ok: true, devCode: code, authSet: !!QQ_AUTH, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' };
-    try { info.smtpIpv4 = dns.lookupSync('smtp.qq.com', { family: 4 }); } catch (e2) { info.smtpIpv4 = 'lookup-fail:' + e2.message; }
-    return res.json(info);
+    var msg = (r && r.error) ? r.error : '未知原因（开发模式或模块缺失）';
+    console.error('[WARN] 邮件发送失败，回退返回验证码供使用: ' + msg);
+    return res.json({ ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg });
   }).catch(function(e) {
     console.error('[WARN] 邮件发送异常，回退返回验证码供使用', e);
     var msg = String((e && e.message) || e);
-    var info = { ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg };
-    try { info.smtpIpv4 = dns.lookupSync('smtp.qq.com', { family: 4 }); } catch (e2) { info.smtpIpv4 = 'lookup-fail:' + e2.message; }
-    return res.json(info);
+    return res.json({ ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg });
   });
 });
 
