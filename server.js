@@ -90,7 +90,10 @@ function sendCodeEmail(email, code) {
     host: 'smtp.qq.com',
     port: 465,
     secure: true,
-    auth: { user: QQ_SENDER, pass: QQ_AUTH }
+    auth: { user: QQ_SENDER, pass: QQ_AUTH },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000
   });
   return transporter.sendMail({
     from: '昆山市张浦高级中学校园论坛 <' + QQ_SENDER + '>',
@@ -154,11 +157,13 @@ app.post('/api/send-code', (req, res) => {
   }
   const code = genCode();
   db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
-  db.prepare("INSERT INTO sms_codes (email, code, expires_at) VALUES (?, ?, datetime('now', '+5 minutes'))").run(email, code);
-  sendCodeEmail(email, code).then(function(sent) {
-    if (!sent) return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式）' });
-    res.json({ ok: true, message: '验证码已发送' });
-  });
+  db.prepare("INSERT INTO sms_codes (phone, email, code, expires_at) VALUES (?, ?, ?, datetime('now', '+5 minutes'))").run(email, email, code);
+  if (!QQ_AUTH) {
+    console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
+    return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式）' });
+  }
+  res.json({ ok: true, message: '验证码已发送' });
+  sendCodeEmail(email, code).catch(function() {});
 });
 
 app.post('/api/register', (req, res) => {
