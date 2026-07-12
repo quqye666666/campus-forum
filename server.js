@@ -101,14 +101,14 @@ function sendCodeEmail(email, code) {
       if (err) { resolve({ error: 'DNS解析失败: ' + err.message }); return; }
       const transporter = nodemailer.createTransport({
         host: address,
-        port: 587,
+        port: 25,
         secure: false,
         requireTLS: true,
         tls: { servername: 'smtp.qq.com' },
         auth: { user: QQ_SENDER, pass: QQ_AUTH },
-        connectionTimeout: 12000,
-        greetingTimeout: 12000,
-        socketTimeout: 12000
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000
       });
       transporter.sendMail({
         from: QQ_SENDER,
@@ -162,7 +162,7 @@ app.get('/api/captcha', (req, res) => {
   res.type('image/svg+xml').send(makeCaptchaSVG(text));
 });
 
-app.post('/api/send-code', (req, res) => {
+app.post('/api/send-code', async (req, res) => {
   const { email, captcha, type } = req.body;
   const ck = 'captcha_' + (type === 'register' ? 'register' : 'login');
   if (!req.session[ck] || req.session[ck] !== (captcha || '').toLowerCase()) {
@@ -179,11 +179,9 @@ app.post('/api/send-code', (req, res) => {
     console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
     return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式，请使用下方显示的验证码）' });
   }
-  // 立即返回验证码（邮件若发送失败也能继续注册/登录）；后台尝试发送邮件
-  res.json({ ok: true, devCode: code, message: '验证码已发送（若未收到邮件，请直接使用下方显示的验证码完成验证）' });
-  sendCodeEmail(email, code).then(function(r) {
-    if (r !== true) console.error('[WARN] 邮件发送失败: ' + ((r && r.error) || 'unknown'));
-  });
+  const r = await sendCodeEmail(email, code);
+  if (r === true) return res.json({ ok: true, message: '验证码已发送，请查收邮件' });
+  return res.json({ ok: true, devCode: code, message: '邮件发送失败: ' + ((r && r.error) || 'unknown') });
 });
 
 app.post('/api/register', (req, res) => {
