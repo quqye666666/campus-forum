@@ -66,33 +66,6 @@ app.get('/api/online', (req, res) => {
   res.json({ online: count.n });
 });
 
-// 临时网络探测：确认 Railway 出网是否放行 SMTP 端口
-app.get('/api/netcheck', (req, res) => {
-  const net = require('net');
-  const targets = [
-    { h: 'smtp.qq.com', p: 465 },
-    { h: 'smtp.qq.com', p: 587 },
-    { h: 'smtp.qq.com', p: 25 },
-    { h: 'example.com', p: 443 }
-  ];
-  const results = {};
-  let pending = targets.length;
-  targets.forEach((t) => {
-    const s = new net.Socket();
-    let done = false;
-    const finish = (ok, info) => {
-      if (done) return; done = true;
-      results[t.h + ':' + t.p] = ok ? 'OK' : ('FAIL ' + (info && info.message ? info.message : info));
-      try { s.destroy(); } catch (e) {}
-      pending -= 1;
-      if (pending === 0) res.json(results);
-    };
-    s.setTimeout(5000, () => finish(false, 'timeout'));
-    s.on('error', (e) => finish(false, e.code || e.message));
-    s.connect(t.p, t.h, () => finish(true));
-  });
-});
-
 // ========== 用户相关 API ==========
 
 function genCode() {
@@ -202,19 +175,14 @@ app.post('/api/send-code', (req, res) => {
   const code = genCode();
   db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
   db.prepare("INSERT INTO sms_codes (phone, email, code, expires_at) VALUES (?, ?, ?, datetime('now', '+5 minutes'))").run(email, email, code);
-  const doSend = sendCodeEmail(email, code);
-
-  doSend.then(function(r) {
-    if (r === true) {
-      return res.json({ ok: true, message: '验证码已发送' });
-    }
-    var msg = (r && r.error) ? r.error : '未知原因（开发模式或模块缺失）';
-    console.error('[WARN] 邮件发送失败，回退返回验证码供使用: ' + msg);
-    return res.json({ ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg });
-  }).catch(function(e) {
-    console.error('[WARN] 邮件发送异常，回退返回验证码供使用', e);
-    var msg = String((e && e.message) || e);
-    return res.json({ ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg });
+  if (!QQ_AUTH) {
+    console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
+    return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式，请使用下方显示的验证码）' });
+  }
+  // 立即返回验证码（邮件若发送失败也能继续注册/登录）；后台尝试发送邮件
+  res.json({ ok: true, devCode: code, message: '验证码已发送（若未收到邮件，请直接使用下方显示的验证码完成验证）' });
+  sendCodeEmail(email, code).then(function(r) {
+    if (r !== true) console.error('[WARN] 邮件发送失败: ' + ((r && r.error) || 'unknown'));
   });
 });
 
