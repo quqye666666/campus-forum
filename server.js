@@ -101,9 +101,9 @@ function sendCodeEmail(email, code) {
     port: 465,
     secure: true,
     auth: { user: QQ_SENDER, pass: QQ_AUTH },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 8000
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 12000
   });
   return transporter.sendMail({
     from: QQ_SENDER,
@@ -168,10 +168,7 @@ app.post('/api/send-code', (req, res) => {
   const code = genCode();
   db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
   db.prepare("INSERT INTO sms_codes (phone, email, code, expires_at) VALUES (?, ?, ?, datetime('now', '+5 minutes'))").run(email, email, code);
-  const doSend = QQ_AUTH ? Promise.race([
-    sendCodeEmail(email, code),
-    new Promise(function(r) { setTimeout(function() { r(false); }, 8000); })
-  ]) : Promise.resolve(false);
+  const doSend = sendCodeEmail(email, code);
 
   doSend.then(function(r) {
     if (r === true) {
