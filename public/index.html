@@ -1,46 +1,46 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>昆山市张浦高级中学 - 校园论坛</title>
+<title>��ɽ�����ָ߼���ѧ - У԰��̳</title>
 <link rel="icon" type="image/png" href="/img/icon.png">
-<link rel="stylesheet" href="/css/style.css?v=2">
-  <link rel="stylesheet" href="/css/yzrt.css?v=2">
+<link rel="stylesheet" href="/css/style.css?v=3">
+  <link rel="stylesheet" href="/css/yzrt.css?v=3">
 </head>
 <body>
-  <!-- CSS水滴 装饰 blob -->
+  <!-- CSSˮ�� װ�� blob -->
   <div class="water-drop-blob"></div>
   <div class="water-drop-blob alt"></div>
 
-  <!-- 设置弹层（含拟态旋钮：背景模糊度） -->
+  <!-- ���õ��㣨����̬��ť������ģ���ȣ� -->
   <div class="yzrt-modal" id="settingsModal">
     <div class="yzrt-modal-card">
-      <div class="yzrt-modal-title">外观设置</div>
+      <div class="yzrt-modal-title">�������</div>
       <div class="yzrt-setting-row">
-        <span>背景模糊度</span>
+        <span>����ģ����</span>
 <div class="knob-wrap">
-        <div class="yzrt-knob" id="blurKnob" title="拖动调节模糊">
+        <div class="yzrt-knob" id="blurKnob" title="�϶�����ģ��">
           <div class="knob-handle"><span class="knob-dot"></span></div>
         </div>
       </div>
     </div>
-      <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="closeSettings()">完成</button>
+      <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="closeSettings()">���</button>
     </div>
   </div>
 
-  <!-- Go Pro 升级弹窗 -->
+  <!-- Go Pro �������� -->
   <div class="yzrt-modal" id="proModal">
     <div class="yzrt-modal-card pro-card">
       <div class="pro-badge">VIP</div>
-      <div class="pro-title">升级校园 VIP</div>
-      <div class="pro-desc">解锁专属标识、炫彩昵称、无限附件与优先展示。<br>本演示版为概念展示，暂未接入支付。</div>
+      <div class="pro-title">����У԰ VIP</div>
+      <div class="pro-desc">����ר����ʶ���Ų��ǳơ����޸���������չʾ��<br>����ʾ��Ϊ����չʾ����δ����֧����</div>
       <button class="go-pro-btn" onclick="closePro()"><span class="text">Go Pro</span><svg class="icon" viewBox="0 0 1024 1024" width="16"><path fill="#fff" d="M855.04 463.872l-322.56-331.776a29.0304 29.0304 0 0 0-40.96 0L168.96 463.872c-9.216 9.728-2.56 26.112 10.752 26.112H327.68v243.712c0 1.536 1.536 3.072 3.072 3.072h362.496c1.536 0 3.072-1.536 3.072-3.072V489.984h147.968a15.36 15.36 0 0 0 10.752-26.112zM685.568 825.344H338.432a10.24 10.24 0 0 1-10.24-10.24v-34.304c0-5.632 4.608-10.24 10.24-10.24h347.136c5.632 0 10.24 4.608 10.24 10.24v34.304a10.24 10.24 0 0 1-10.24 10.24zM686.08 896H337.92a9.728 9.728 0 0 1-9.728-9.728v-18.432c0-5.12 4.096-9.728 9.728-9.728h348.16c5.12 0 9.728 4.096 9.728 9.728v18.432c0 5.12-4.096 9.728-9.728 9.728z"></path></svg></button>
     </div>
   </div>
 
-  <!-- launch start 悬浮发帖按钮 -->
-  <div class="launch-fab" id="launchFab" title="发帖" onclick="openComposer()">
+  <!-- launch start ����������ť -->
+  <div class="launch-fab" id="launchFab" title="����" onclick="openComposer()">
     <div class="launch-back">
       <div class="launch-mid">
         <div class="launch-btn-in">
@@ -59,52 +59,52 @@
   <div class="bg-glass"></div>
   <div class="auth-card">
     <div class="auth-icon-wrap"><img src="/img/icon.png" alt="" class="auth-icon"></div>
-    <h1>昆山市张浦高级中学</h1>
-    <p class="subtitle">校园生活分享平台</p>
+    <h1>��ɽ�����ָ߼���ѧ</h1>
+    <p class="subtitle">У԰�������ƽ̨</p>
     <div class="auth-tabs">
-      <button id="loginTab" class="active" onclick="switchAuthTab('login')">登录</button>
-      <button id="registerTab" onclick="switchAuthTab('register')">注册</button>
+      <button id="loginTab" class="active" onclick="switchAuthTab('login')">��¼</button>
+      <button id="registerTab" onclick="switchAuthTab('register')">ע��</button>
     </div>
     <form id="loginForm" onsubmit="return handleLogin(event)">
-      <div class="form-group"><label>QQ邮箱</label><input type="email" id="loginEmail" placeholder="如 123456@qq.com" required></div>
+      <div class="form-group"><label>QQ����</label><input type="email" id="loginEmail" placeholder="�� 123456@qq.com" required></div>
       <div id="loginCodeMode">
-        <div class="form-group"><label>图形验证</label>
+        <div class="form-group"><label>ͼ����֤</label>
           <div class="code-input-wrap">
-            <input type="text" id="loginCaptcha" placeholder="输入图中字符" maxlength="4">
-            <img id="loginCaptchaImg" class="captcha-img" src="/api/captcha?type=login" onclick="refreshCaptcha('login')" alt="点击刷新">
+            <input type="text" id="loginCaptcha" placeholder="����ͼ���ַ�" maxlength="4">
+            <img id="loginCaptchaImg" class="captcha-img" src="/api/captcha?type=login" onclick="refreshCaptcha('login')" alt="���ˢ��">
           </div>
         </div>
-        <div class="form-group"><label>邮箱验证码</label>
+        <div class="form-group"><label>������֤��</label>
           <div class="code-input-wrap">
-            <input type="text" id="loginCode" placeholder="请输入6位验证码" maxlength="6">
-            <button type="button" class="btn btn-outline btn-sm" id="loginSendBtn" onclick="sendCode('login')">获取验证码</button>
+            <input type="text" id="loginCode" placeholder="������6λ��֤��" maxlength="6">
+            <button type="button" class="btn btn-outline btn-sm" id="loginSendBtn" onclick="sendCode('login')">��ȡ��֤��</button>
           </div>
         </div>
       </div>
       <div id="loginPwdMode" style="display:none">
-        <div class="form-group"><label>密码</label><input type="password" id="loginPassword" placeholder="请输入密码" minlength="6"></div>
+        <div class="form-group"><label>����</label><input type="password" id="loginPassword" placeholder="����������" minlength="6"></div>
       </div>
       <p id="loginError" class="error-msg"></p>
-      <button type="submit" class="btn btn-primary btn-block">登 录</button>
-      <div class="auth-switch">使用<a id="loginModeLink" onclick="toggleLoginMode()">密码登录</a></div>
+      <button type="submit" class="btn btn-primary btn-block">�� ¼</button>
+      <div class="auth-switch">ʹ��<a id="loginModeLink" onclick="toggleLoginMode()">�����¼</a></div>
     </form>
     <form id="registerForm" style="display:none" onsubmit="return handleRegister(event)">
-      <div class="form-group"><label>QQ邮箱</label><input type="email" id="regEmail" placeholder="如 123456@qq.com" required></div>
-      <div class="form-group"><label>用户名</label><input type="text" id="regName" placeholder="2-20位中英文，不含数字/符号" required></div>
-      <div class="form-group"><label>图形验证</label>
+      <div class="form-group"><label>QQ����</label><input type="email" id="regEmail" placeholder="�� 123456@qq.com" required></div>
+      <div class="form-group"><label>�û���</label><input type="text" id="regName" placeholder="2-20λ��Ӣ�ģ���������/����" required></div>
+      <div class="form-group"><label>ͼ����֤</label>
         <div class="code-input-wrap">
-          <input type="text" id="regCaptcha" placeholder="输入图中字符" maxlength="4" required>
-          <img id="regCaptchaImg" class="captcha-img" src="/api/captcha?type=register" onclick="refreshCaptcha('register')" alt="点击刷新">
+          <input type="text" id="regCaptcha" placeholder="����ͼ���ַ�" maxlength="4" required>
+          <img id="regCaptchaImg" class="captcha-img" src="/api/captcha?type=register" onclick="refreshCaptcha('register')" alt="���ˢ��">
         </div>
       </div>
-      <div class="form-group"><label>邮箱验证码</label>
+      <div class="form-group"><label>������֤��</label>
         <div class="code-input-wrap">
-          <input type="text" id="regCode" placeholder="请输入6位验证码" maxlength="6" required>
-          <button type="button" class="btn btn-outline btn-sm" id="regSendBtn" onclick="sendCode('register')">获取验证码</button>
+          <input type="text" id="regCode" placeholder="������6λ��֤��" maxlength="6" required>
+          <button type="button" class="btn btn-outline btn-sm" id="regSendBtn" onclick="sendCode('register')">��ȡ��֤��</button>
         </div>
       </div>
       <p id="regError" class="error-msg"></p>
-      <button type="submit" class="btn btn-primary btn-block">注 册</button>
+      <button type="submit" class="btn btn-primary btn-block">ע ��</button>
     </form>
   </div>
 </div>
@@ -119,28 +119,28 @@
   </div>
 
   <header class="topbar">
-    <div class="logo" onclick="showMainPage()"><img src="/img/icon.png" alt="" class="logo-icon"><span class="logo-text">张浦高级中学</span></div>
+    <div class="logo" onclick="showMainPage()"><img src="/img/icon.png" alt="" class="logo-icon"><span class="logo-text">���ָ߼���ѧ</span></div>
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="搜索帖子、用户..." onkeydown="if(event.key==='Enter')searchPosts()">
-      <button class="search-btn" onclick="searchPosts()" aria-label="搜索">
+      <input type="text" id="searchInput" placeholder="�������ӡ��û�..." onkeydown="if(event.key==='Enter')searchPosts()">
+      <button class="search-btn" onclick="searchPosts()" aria-label="����">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
     </div>
     <div class="user-info">
-      <span class="online-count" id="onlineCount" title="在线人数">🟢 0</span>
-      <button class="gear-btn" onclick="openSettings()" title="外观设置">⚙</button>
-      <button class="btn btn-outline btn-sm" style="margin-right:12px" onclick="showChat()">💬 私信</button>
-      <div class="user-avatar" id="topAvatar" onclick="goMyProfile(event)" title="个人主页"></div>
+      <span class="online-count" id="onlineCount" title="��������">?? 0</span>
+      <button class="gear-btn" onclick="openSettings()" title="�������">?</button>
+      <button class="btn btn-outline btn-sm" style="margin-right:12px" onclick="showChat()">?? ˽��</button>
+      <div class="user-avatar" id="topAvatar" onclick="goMyProfile(event)" title="������ҳ"></div>
       <div class="user-name-area" onclick="toggleUserDropdown(event)">
         <span id="topNickname"></span>
         <span class="dropdown-arrow" id="dropdownArrow">&#9660;</span>
       </div>
       <div class="user-dropdown" id="userDropdown">
-        <a href="#" onclick="event.preventDefault();goMyProfile(event)">个人主页</a>
-        <a href="#" onclick="event.preventDefault();showChat()">私信</a>
-        <a href="#" onclick="event.preventDefault();showMainPage()">首页</a>
+        <a href="#" onclick="event.preventDefault();goMyProfile(event)">������ҳ</a>
+        <a href="#" onclick="event.preventDefault();showChat()">˽��</a>
+        <a href="#" onclick="event.preventDefault();showMainPage()">��ҳ</a>
         <div class="divider"></div>
-        <a href="#" onclick="event.preventDefault();handleLogout()" class="logout">退出登录</a>
+        <a href="#" onclick="event.preventDefault();handleLogout()" class="logout">�˳���¼</a>
       </div>
     </div>
   </header>
@@ -149,17 +149,17 @@
     <div class="main-content">
       <aside class="sidebar">
         <nav class="sidebar-nav">
-          <div class="nav-header">帖子分区</div>
+          <div class="nav-header">���ӷ���</div>
           <div id="sectionNav">
-            <div class="nav-item active" data-section="0" onclick="selectSection(0)"><span class="icon">&#127760;</span> 全部动态</div>
+            <div class="nav-item active" data-section="0" onclick="selectSection(0)"><span class="icon">&#127760;</span> ȫ����̬</div>
           </div>
           <div class="nav-divider"></div>
-          <div class="nav-item nav-poll" data-section="-1" onclick="selectSection(-1)"><span class="icon">&#128202;</span> 投票区</div>
+          <div class="nav-item nav-poll" data-section="-1" onclick="selectSection(-1)"><span class="icon">&#128202;</span> ͶƱ��</div>
         </nav>
       </aside>
       <main class="feed" id="feed">
         <div class="post-composer" id="postComposer">
-          <textarea id="postContent" placeholder="分享你的校园生活..."></textarea>
+          <textarea id="postContent" placeholder="�������У԰����..."></textarea>
           <div class="image-preview" id="imagePreview" style="display:none;">
             <div id="previewImages"></div>
             <button class="remove-img" onclick="removeImage()">&times;</button>
@@ -168,37 +168,37 @@
             <div class="composer-left">
               <select id="postSection" class="section-select"></select>
               <label class="file-input-label">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 图片/视频/文件
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> ͼƬ/��Ƶ/�ļ�
                 <input type="file" id="imageInput" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" multiple onchange="previewImages()">
               </label>
-              <button class="btn btn-outline btn-sm" onclick="togglePollForm()">📊 投票</button>
+              <button class="btn btn-outline btn-sm" onclick="togglePollForm()">?? ͶƱ</button>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="createPost()">发布动态</button>
+            <button class="btn btn-primary btn-sm" onclick="createPost()">������̬</button>
           </div>
           <div class="poll-form" id="pollForm" style="display:none">
-            <input type="text" id="pollQuestion" placeholder="投票问题" style="width:100%;margin-bottom:8px">
+            <input type="text" id="pollQuestion" placeholder="ͶƱ����" style="width:100%;margin-bottom:8px">
             <div id="pollOptions">
-              <div class="poll-option-row"><input type="text" placeholder="选项 1"><span class="poll-opt-remove" onclick="removePollOption(this)">✕</span></div>
-              <div class="poll-option-row"><input type="text" placeholder="选项 2"><span class="poll-opt-remove" onclick="removePollOption(this)">✕</span></div>
+              <div class="poll-option-row"><input type="text" placeholder="ѡ�� 1"><span class="poll-opt-remove" onclick="removePollOption(this)">?</span></div>
+              <div class="poll-option-row"><input type="text" placeholder="ѡ�� 2"><span class="poll-opt-remove" onclick="removePollOption(this)">?</span></div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="addPollOption()">+ 添加选项</button>
+            <button class="btn btn-outline btn-sm" onclick="addPollOption()">+ ����ѡ��</button>
           </div>
         </div>
         <div id="postsList"></div>
         <div id="pollsContainer"></div>
-        <div id="loadingMore" class="loading-more" style="display:none"><div class="spinner"></div>加载中...</div>
+        <div id="loadingMore" class="loading-more" style="display:none"><div class="spinner"></div>������...</div>
       </main>
       <aside class="right-panel">
-        <div class="panel-card"><h3>热门分区</h3><div id="hotSections"></div></div>
+        <div class="panel-card"><h3>���ŷ���</h3><div id="hotSections"></div></div>
         <div class="panel-card">
-          <h3>昆山市张浦高级中学</h3>
+          <h3>��ɽ�����ָ߼���ѧ</h3>
           <div style="font-size:13px;color:#8c8c8c;line-height:1.8;">
-            发布动态分享生活<br>评论互动交朋友<br>点赞支持好内容<br>不同分区看帖子
+            ������̬��������<br>���ۻ���������<br>����֧�ֺ�����<br>��ͬ����������
           </div>
         </div>
         <div class="panel-card pro-cta" onclick="openPro()">
-          <div class="pro-cta-title">✨ 升级校园 VIP</div>
-          <div class="pro-cta-sub">专属标识 · 炫彩昵称 · 无限附件</div>
+          <div class="pro-cta-title">? ����У԰ VIP</div>
+          <div class="pro-cta-sub">ר����ʶ �� �Ų��ǳ� �� ���޸���</div>
           <button class="go-pro-btn go-pro-btn-sm"><span class="text">Go Pro</span><svg class="icon" viewBox="0 0 1024 1024" width="14"><path fill="#fff" d="M855.04 463.872l-322.56-331.776a29.0304 29.0304 0 0 0-40.96 0L168.96 463.872c-9.216 9.728-2.56 26.112 10.752 26.112H327.68v243.712c0 1.536 1.536 3.072 3.072 3.072h362.496c1.536 0 3.072-1.536 3.072-3.072V489.984h147.968a15.36 15.36 0 0 0 10.752-26.112zM685.568 825.344H338.432a10.24 10.24 0 0 1-10.24-10.24v-34.304c0-5.632 4.608-10.24 10.24-10.24h347.136c5.632 0 10.24 4.608 10.24 10.24v34.304a10.24 10.24 0 0 1-10.24 10.24zM686.08 896H337.92a9.728 9.728 0 0 1-9.728-9.728v-18.432c0-5.12 4.096-9.728 9.728-9.728h348.16c5.12 0 9.728 4.096 9.728 9.728v18.432c0 5.12-4.096 9.728-9.728 9.728z"></path></svg></button>
         </div>
       </aside>
@@ -207,8 +207,8 @@
 
   <div id="searchPage" style="display:none">
     <div class="search-header">
-      <button class="btn btn-outline btn-sm" onclick="showMainPage()">&larr; 返回</button>
-      <h3>搜索结果</h3>
+      <button class="btn btn-outline btn-sm" onclick="showMainPage()">&larr; ����</button>
+      <h3>�������</h3>
     </div>
     <div id="searchResults" class="feed"></div>
   </div>
@@ -217,56 +217,56 @@
     <div class="chat-layout">
       <div class="chat-sidebar">
         <div class="chat-sidebar-header">
-          <h3>消息</h3>
-          <button class="btn btn-sm btn-outline" onclick="showNewGroup()">+ 建群</button>
+          <h3>��Ϣ</h3>
+          <button class="btn btn-sm btn-outline" onclick="showNewGroup()">+ ��Ⱥ</button>
         </div>
         <div id="conversationList"></div>
         <div id="groupList"></div>
       </div>
       <div class="chat-main">
         <div id="chatHeader" class="chat-header">
-          <span class="chat-back" onclick="closeChat()">&larr; 返回</span>
-          <span id="chatTitle">选择对话</span>
+          <span class="chat-back" onclick="closeChat()">&larr; ����</span>
+          <span id="chatTitle">ѡ��Ի�</span>
         </div>
         <div id="chatMessages" class="chat-messages">
-          <div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">选择一个对话开始聊天</div></div>
+          <div class="empty-state"><div class="empty-icon">??</div><div class="empty-text">ѡ��һ���Ի���ʼ����</div></div>
         </div>
         <div class="chat-input-area" id="chatInputArea" style="display:none">
-          <textarea id="chatInput" placeholder="输入消息..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
+          <textarea id="chatInput" placeholder="������Ϣ..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
           <div class="chat-input-actions">
             <label class="file-input-label chat-file-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
               <input type="file" id="chatFileInput" onchange="sendChatFile()">
             </label>
-            <button class="btn btn-primary btn-sm" onclick="sendChatMessage()">发送</button>
+            <button class="btn btn-primary btn-sm" onclick="sendChatMessage()">����</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 新建群聊弹窗 -->
+  <!-- �½�Ⱥ�ĵ��� -->
   <div id="newGroupModal" class="modal" style="display:none">
     <div class="modal-card">
-      <h3>创建群聊</h3>
-      <div class="form-group"><label>群名称</label><input type="text" id="groupName" placeholder="输入群名称"></div>
-      <div class="form-group"><label>邀请成员 (ID, 逗号分隔)</label><input type="text" id="groupMembers" placeholder="输入用户ID"></div>
+      <h3>����Ⱥ��</h3>
+      <div class="form-group"><label>Ⱥ����</label><input type="text" id="groupName" placeholder="����Ⱥ����"></div>
+      <div class="form-group"><label>�����Ա (ID, ���ŷָ�)</label><input type="text" id="groupMembers" placeholder="�����û�ID"></div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="createGroup()">创建</button>
-        <button class="btn btn-outline btn-sm" onclick="closeNewGroup()">取消</button>
+        <button class="btn btn-primary btn-sm" onclick="createGroup()">����</button>
+        <button class="btn btn-outline btn-sm" onclick="closeNewGroup()">ȡ��</button>
       </div>
     </div>
   </div>
 
   <div id="profilePage" style="display:none">
     <div class="profile-container">
-      <button class="btn btn-outline btn-sm back-btn" onclick="showMainPage()">&larr; 返回首页</button>
+      <button class="btn btn-outline btn-sm back-btn" onclick="showMainPage()">&larr; ������ҳ</button>
       <div class="profile-header">
         <div class="profile-avatar-wrap">
           <div class="profile-avatar" id="profileAvatar"></div>
           <img id="profileAvatarImg" class="profile-avatar-img" src="" alt="" style="display:none">
           <div class="avatar-upload" id="avatarUploadBtn" style="display:none">
-            <label class="avatar-upload-label" title="更换头像">
+            <label class="avatar-upload-label" title="����ͷ��">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar()">
             </label>
@@ -284,22 +284,22 @@
           <span id="profileZodiac" class="zodiac-tag"></span>
         </div>
         <div class="profile-stats">
-          <div class="profile-stat"><div class="num" id="profilePostCount">0</div><div class="label">帖子</div></div>
+          <div class="profile-stat"><div class="num" id="profilePostCount">0</div><div class="label">����</div></div>
         </div>
         <div id="profileActions" style="margin-top:16px"></div>
         <div class="profile-edit" id="profileEditForm">
-          <div class="form-group"><label>昵称</label><input type="text" id="editNickname"></div>
-          <div class="form-group"><label>学校</label><input type="text" id="editSchool"></div>
-          <div class="form-group"><label>年级/班级</label><input type="text" id="editGrade" placeholder="如：高二(3)班"></div>
-          <div class="form-group"><label>性别</label><select id="editGender"><option value="">未设置</option><option value="男">男</option><option value="女">女</option></select></div>
-          <div class="form-group"><label>生日</label><input type="date" id="editBirthday"></div>
-          <div class="form-group"><label>星座</label><input type="text" id="editZodiac" readonly style="background:#f5f5f5;color:var(--text-secondary)"></div>
-          <div class="form-group"><label>个人简介</label><textarea id="editBio"></textarea></div>
-          <div class="form-group"><label>个性签名</label><input type="text" id="editSignature" placeholder="一句话介绍自己"></div>
-          <div class="form-group"><label>设置密码</label><input type="password" id="editPassword" placeholder="至少6位，用于密码登录（留空则不修改）"></div>
+          <div class="form-group"><label>�ǳ�</label><input type="text" id="editNickname"></div>
+          <div class="form-group"><label>ѧУ</label><input type="text" id="editSchool"></div>
+          <div class="form-group"><label>�꼶/�༶</label><input type="text" id="editGrade" placeholder="�磺�߶�(3)��"></div>
+          <div class="form-group"><label>�Ա�</label><select id="editGender"><option value="">δ����</option><option value="��">��</option><option value="Ů">Ů</option></select></div>
+          <div class="form-group"><label>����</label><input type="date" id="editBirthday"></div>
+          <div class="form-group"><label>����</label><input type="text" id="editZodiac" readonly style="background:#f5f5f5;color:var(--text-secondary)"></div>
+          <div class="form-group"><label>���˼��</label><textarea id="editBio"></textarea></div>
+          <div class="form-group"><label>����ǩ��</label><input type="text" id="editSignature" placeholder="һ�仰�����Լ�"></div>
+          <div class="form-group"><label>��������</label><input type="password" id="editPassword" placeholder="����6λ�����������¼���������޸ģ�"></div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
-            <button class="btn btn-outline btn-sm" onclick="toggleEditProfile()">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="saveProfile()">����</button>
+            <button class="btn btn-outline btn-sm" onclick="toggleEditProfile()">ȡ��</button>
           </div>
         </div>
       </div>
@@ -309,6 +309,6 @@
 
 </div>
 
-<script src="/js/app.js?v=2"></script>
+<script src="/js/app.js?v=3"></script>
 </body>
 </html>

@@ -174,7 +174,7 @@ var codeTimers = {};
 function sendCode(kind) {
   var emailInput = document.getElementById(kind === 'login' ? 'loginEmail' : 'regEmail');
   var email = (emailInput.value || '').trim();
-  var captcha = document.getElementById(kind + 'Captcha').value.trim();
+  var captcha = document.getElementById(kind === 'login' ? 'loginCaptcha' : 'regCaptcha').value.trim();
   var err = document.getElementById(kind === 'login' ? 'loginError' : 'regError');
   if (!/^[A-Za-z0-9._-]+@qq\.com$/i.test(email)) {
     err.textContent = '请输入正确的QQ邮箱（如 123456@qq.com）';
@@ -211,7 +211,7 @@ function sendCode(kind) {
 }
 
 function refreshCaptcha(kind) {
-  var img = document.getElementById(kind + 'CaptchaImg');
+  var img = document.getElementById(kind === 'login' ? 'loginCaptchaImg' : 'regCaptchaImg');
   if (img) img.src = '/api/captcha?type=' + kind + '&t=' + Date.now();
 }
 
