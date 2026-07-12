@@ -103,7 +103,7 @@ function sendCodeEmail(email, code) {
     socketTimeout: 8000
   });
   return transporter.sendMail({
-    from: '昆山市张浦高级中学校园论坛 <' + QQ_SENDER + '>',
+    from: QQ_SENDER,
     to: email,
     subject: '邮箱验证码',
     text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
@@ -165,12 +165,21 @@ app.post('/api/send-code', (req, res) => {
   const code = genCode();
   db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
   db.prepare("INSERT INTO sms_codes (phone, email, code, expires_at) VALUES (?, ?, ?, datetime('now', '+5 minutes'))").run(email, email, code);
-  if (!QQ_AUTH) {
-    console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
-    return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式）' });
-  }
-  res.json({ ok: true, message: '验证码已发送' });
-  sendCodeEmail(email, code).catch(function() {});
+  const doSend = QQ_AUTH ? Promise.race([
+    sendCodeEmail(email, code),
+    new Promise(function(r) { setTimeout(function() { r(false); }, 8000); })
+  ]) : Promise.resolve(false);
+
+  doSend.then(function(sent) {
+    if (sent === true) {
+      return res.json({ ok: true, message: '验证码已发送' });
+    }
+    console.error('[WARN] 邮件发送失败，回退返回验证码供使用');
+    return res.json({ ok: true, devCode: code, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' });
+  }).catch(function(e) {
+    console.error('[WARN] 邮件发送异常，回退返回验证码供使用', e);
+    return res.json({ ok: true, devCode: code, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' });
+  });
 });
 
 app.post('/api/register', (req, res) => {
