@@ -163,15 +163,28 @@ app.post('/api/register', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
-  const { phone, code } = req.body;
+  const { phone, code, password } = req.body;
   if (!phoneValid(phone)) return res.status(400).json({ error: '请输入正确的手机号' });
-  if (!code) return res.status(400).json({ error: '请输入验证码' });
   const user = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
   if (!user) return res.status(400).json({ error: '该手机号尚未注册，请先注册' });
-  if (!verifySMSCode(phone, code)) return res.status(400).json({ error: '验证码错误或已过期' });
-  db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(phone);
+  if (password) {
+    if (!user.password || !bcrypt.compareSync(password, user.password)) {
+      return res.status(400).json({ error: '密码错误' });
+    }
+  } else {
+    if (!code) return res.status(400).json({ error: '请输入验证码' });
+    if (!verifySMSCode(phone, code)) return res.status(400).json({ error: '验证码错误或已过期' });
+    db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(phone);
+  }
   req.session.userId = user.id;
   res.json({ id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, school: user.school, bio: user.bio });
+});
+
+app.put('/api/user/password', requireAuth, (req, res) => {
+  const { password } = req.body;
+  if (!password || password.length < 6) return res.status(400).json({ error: '密码至少6位' });
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(bcrypt.hashSync(password, 10), req.session.userId);
+  res.json({ ok: true });
 });
 
 app.post('/api/logout', (req, res) => {

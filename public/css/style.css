@@ -167,6 +167,9 @@ body {
 .code-input-wrap .btn { flex-shrink:0; white-space:nowrap; }
 .code-input-wrap .btn:disabled { opacity:0.6; cursor:not-allowed; }
 .captcha-img { width:110px; height:38px; border-radius:8px; border:1px solid var(--border); cursor:pointer; flex-shrink:0; background:#f2f2f7; }
+.auth-switch { text-align:center; margin-top:12px; font-size:13px; color:var(--text-secondary); }
+.auth-switch a { color:var(--primary); cursor:pointer; font-weight:600; }
+.auth-switch a:hover { text-decoration:underline; }
 
 .error-msg { color:#ff7875; font-size:13px; margin-top:-8px; margin-bottom:12px; display:none; }
 

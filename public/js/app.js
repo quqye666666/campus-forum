@@ -79,18 +79,35 @@ function switchAuthTab(tab) {
   document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
   document.getElementById('loginError').style.display = 'none';
   document.getElementById('regError').style.display = 'none';
+  if (tab === 'login' && loginMode !== 'code') toggleLoginMode();
   refreshCaptcha(tab);
+}
+
+var loginMode = 'code';
+
+function toggleLoginMode() {
+  loginMode = loginMode === 'code' ? 'password' : 'code';
+  var codeMode = loginMode === 'code';
+  document.getElementById('loginCodeMode').style.display = codeMode ? '' : 'none';
+  document.getElementById('loginPwdMode').style.display = codeMode ? 'none' : '';
+  document.getElementById('loginModeLink').textContent = codeMode ? '密码登录' : '验证码登录';
+  document.getElementById('loginError').style.display = 'none';
 }
 
 function handleLogin(e) {
   e.preventDefault();
   var phone = document.getElementById('loginPhone').value.trim();
-  var code = document.getElementById('loginCode').value.trim();
   var err = document.getElementById('loginError');
+  var body;
+  if (loginMode === 'password') {
+    body = { phone: phone, password: document.getElementById('loginPassword').value };
+  } else {
+    body = { phone: phone, code: document.getElementById('loginCode').value.trim() };
+  }
   fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, code: code })
+    body: JSON.stringify(body)
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -102,6 +119,7 @@ function handleLogin(e) {
       } else {
         err.textContent = r.data.error;
         err.style.display = 'block';
+        if (loginMode === 'code') refreshCaptcha('login');
       }
     }).catch(function(e) { console.log('login:', e); });
   return false;
@@ -723,11 +741,21 @@ function saveProfile() {
   var g = document.getElementById('editGender').value;
   var gr = document.getElementById('editGrade').value;
   var sig = document.getElementById('editSignature').value;
+  var pwd = document.getElementById('editPassword').value;
   fetch('/api/user/profile', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nickname: n, school: s, bio: b, birthday: bday, gender: g, grade: gr, signature: sig })
   }).then(function(r) { return r.json(); }).then(function() {
+    if (pwd) {
+      return fetch('/api/user/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      });
+    }
+  }).then(function() {
+    document.getElementById('editPassword').value = '';
     showToast('资料已更新', 'success');
     currentUser.nickname = n;
     document.getElementById('topNickname').textContent = n;
