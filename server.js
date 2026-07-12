@@ -178,11 +178,15 @@ app.post('/api/send-code', (req, res) => {
       return res.json({ ok: true, message: '验证码已发送' });
     }
     console.error('[WARN] 邮件发送失败，回退返回验证码供使用');
-    return res.json({ ok: true, devCode: code, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' });
+    var info = { ok: true, devCode: code, authSet: !!QQ_AUTH, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' };
+    try { info.smtpIpv4 = dns.lookupSync('smtp.qq.com', { family: 4 }); } catch (e2) { info.smtpIpv4 = 'lookup-fail:' + e2.message; }
+    return res.json(info);
   }).catch(function(e) {
     console.error('[WARN] 邮件发送异常，回退返回验证码供使用', e);
     var msg = String((e && e.message) || e);
-    return res.json({ ok: true, devCode: code, error: msg, message: '邮件发送失败：' + msg });
+    var info = { ok: true, devCode: code, authSet: !!QQ_AUTH, error: msg, message: '邮件发送失败：' + msg };
+    try { info.smtpIpv4 = dns.lookupSync('smtp.qq.com', { family: 4 }); } catch (e2) { info.smtpIpv4 = 'lookup-fail:' + e2.message; }
+    return res.json(info);
   });
 });
 
