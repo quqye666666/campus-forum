@@ -96,22 +96,28 @@ function sendCodeEmail(email, code) {
   let nodemailer;
   try { nodemailer = require('nodemailer'); }
   catch (e) { console.error('nodemailer 未安装，无法发送邮件'); return Promise.resolve({ error: 'nodemailer 未安装: ' + e.message }); }
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.qq.com',
-    port: 465,
-    secure: true,
-    auth: { user: QQ_SENDER, pass: QQ_AUTH },
-    connectionTimeout: 12000,
-    greetingTimeout: 12000,
-    socketTimeout: 12000
+  return new Promise(function(resolve) {
+    dns.lookup('smtp.qq.com', { family: 4 }, function(err, address) {
+      if (err) { resolve({ error: 'DNS解析失败: ' + err.message }); return; }
+      const transporter = nodemailer.createTransport({
+        host: address,
+        port: 465,
+        secure: true,
+        tls: { servername: 'smtp.qq.com' },
+        auth: { user: QQ_SENDER, pass: QQ_AUTH },
+        connectionTimeout: 12000,
+        greetingTimeout: 12000,
+        socketTimeout: 12000
+      });
+      transporter.sendMail({
+        from: QQ_SENDER,
+        to: email,
+        subject: '邮箱验证码',
+        text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
+        html: '<p>您的验证码是：<b>' + code + '</b></p><p>5分钟内有效，请勿泄露给他人。</p>'
+      }).then(function() { resolve(true); }).catch(function(e) { resolve({ error: String((e && e.message) || e) }); });
+    });
   });
-  return transporter.sendMail({
-    from: QQ_SENDER,
-    to: email,
-    subject: '邮箱验证码',
-    text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
-    html: '<p>您的验证码是：<b>' + code + '</b></p><p>5分钟内有效，请勿泄露给他人。</p>'
-  }).then(function() { return true; }).catch(function(e) { return { error: String((e && e.message) || e) }; });
 }
 
 /* ========== 图形验证码（人机验证） ========== */
