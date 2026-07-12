@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const db = require('./database');
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 
 const baseDir = process.env.DATA_DIR || __dirname;
 const uploadsDir = path.join(baseDir, 'public', 'uploads');
