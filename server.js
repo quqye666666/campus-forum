@@ -101,8 +101,9 @@ function sendCodeEmail(email, code) {
       if (err) { resolve({ error: 'DNS解析失败: ' + err.message }); return; }
       const transporter = nodemailer.createTransport({
         host: address,
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false,
+        requireTLS: true,
         tls: { servername: 'smtp.qq.com' },
         auth: { user: QQ_SENDER, pass: QQ_AUTH },
         connectionTimeout: 12000,
