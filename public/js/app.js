@@ -96,13 +96,13 @@ function toggleLoginMode() {
 
 function handleLogin(e) {
   e.preventDefault();
-  var phone = document.getElementById('loginPhone').value.trim();
+  var email = document.getElementById('loginEmail').value.trim();
   var err = document.getElementById('loginError');
   var body;
   if (loginMode === 'password') {
-    body = { phone: phone, password: document.getElementById('loginPassword').value };
+    body = { email: email, password: document.getElementById('loginPassword').value };
   } else {
-    body = { phone: phone, code: document.getElementById('loginCode').value.trim() };
+    body = { email: email, code: document.getElementById('loginCode').value.trim() };
   }
   fetch('/api/login', {
     method: 'POST',
@@ -127,10 +127,15 @@ function handleLogin(e) {
 
 function handleRegister(e) {
   e.preventDefault();
-  var phone = document.getElementById('regPhone').value.trim();
+  var email = document.getElementById('regEmail').value.trim();
   var name = document.getElementById('regName').value.trim();
   var code = document.getElementById('regCode').value.trim();
   var err = document.getElementById('regError');
+  if (!/^[A-Za-z0-9._-]+@qq\.com$/i.test(email)) {
+    err.textContent = '请输入正确的QQ邮箱（如 123456@qq.com）';
+    err.style.display = 'block';
+    return false;
+  }
   if (!/^[\u4e00-\u9fa5a-zA-Z]{2,20}$/.test(name)) {
     err.textContent = '用户名须为2-20位中英文，不能含数字或特殊符号';
     err.style.display = 'block';
@@ -139,7 +144,7 @@ function handleRegister(e) {
   fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, code: code, name: name })
+    body: JSON.stringify({ email: email, code: code, name: name })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -159,12 +164,12 @@ function handleRegister(e) {
 
 var codeTimers = {};
 function sendCode(kind) {
-  var phoneInput = document.getElementById(kind === 'login' ? 'loginPhone' : 'regPhone');
-  var phone = (phoneInput.value || '').trim();
+  var emailInput = document.getElementById(kind === 'login' ? 'loginEmail' : 'regEmail');
+  var email = (emailInput.value || '').trim();
   var captcha = document.getElementById(kind + 'Captcha').value.trim();
   var err = document.getElementById(kind === 'login' ? 'loginError' : 'regError');
-  if (!/^1[3-9]\d{9}$/.test(phone)) {
-    err.textContent = '请输入正确的手机号';
+  if (!/^[A-Za-z0-9._-]+@qq\.com$/i.test(email)) {
+    err.textContent = '请输入正确的QQ邮箱（如 123456@qq.com）';
     err.style.display = 'block';
     return;
   }
@@ -177,7 +182,7 @@ function sendCode(kind) {
   fetch('/api/send-code', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, captcha: captcha, type: kind })
+    body: JSON.stringify({ email: email, captcha: captcha, type: kind })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (!r.ok) {

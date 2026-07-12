@@ -190,6 +190,17 @@ const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NU
 empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
 db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
 
+if (!userColumns.includes('email')) {
+  db.exec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
+}
+db.prepare("UPDATE users SET email = NULL WHERE email = '' OR email IS NULL").run();
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+
+const smsCols = db.prepare("PRAGMA table_info(sms_codes)").all().map(c => c.name);
+if (!smsCols.includes('email')) {
+  db.exec('ALTER TABLE sms_codes ADD COLUMN email TEXT DEFAULT ""');
+}
+
 const defaultSections = [
   { name: '校园动态', icon: '🏫', description: '校园热门动态' },
   { name: '学习交流', icon: '📚', description: '课程讨论、学习心得' },
