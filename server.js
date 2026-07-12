@@ -111,7 +111,7 @@ function sendCodeEmail(email, code) {
     subject: '邮箱验证码',
     text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
     html: '<p>您的验证码是：<b>' + code + '</b></p><p>5分钟内有效，请勿泄露给他人。</p>'
-  }).then(function() { return true; }).catch(function(e) { console.error('邮件发送失败', e); return false; });
+  }).then(function() { return true; }).catch(function(e) { throw e; });
 }
 
 /* ========== 图形验证码（人机验证） ========== */
@@ -181,7 +181,8 @@ app.post('/api/send-code', (req, res) => {
     return res.json({ ok: true, devCode: code, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' });
   }).catch(function(e) {
     console.error('[WARN] 邮件发送异常，回退返回验证码供使用', e);
-    return res.json({ ok: true, devCode: code, message: '验证码已发送（邮件发送失败，请使用下方显示的验证码）' });
+    var msg = String((e && e.message) || e);
+    return res.json({ ok: true, devCode: code, error: msg, message: '邮件发送失败：' + msg });
   });
 });
 
