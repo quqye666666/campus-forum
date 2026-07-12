@@ -79,7 +79,7 @@ function verifyCode(email, code) {
 
 const nodemailer = require('nodemailer');
 const QQ_SENDER = '3110735899@qq.com';
-const QQ_AUTH = process.env.QQ_EMAIL_AUTH || '';
+const QQ_AUTH = process.env.QQ_EMAIL_AUTH || process.env.qqname || '';
 
 function sendCodeEmail(email, code) {
   if (!QQ_AUTH) {
