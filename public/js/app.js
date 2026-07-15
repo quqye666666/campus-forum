@@ -168,7 +168,8 @@ function handleRegister(e) {
 
 function refreshCaptcha() {
   [].forEach.call(document.querySelectorAll('.captcha-img'), function(img) {
-    img.src = '/api/captcha?t=' + Date.now();
+    var type = img.id.indexOf('login') !== -1 ? 'login' : 'register';
+    img.src = '/api/captcha?type=' + type + '&t=' + Date.now();
   });
 }
 

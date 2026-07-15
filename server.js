@@ -6,9 +6,6 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const db = require('./database');
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
-
 const baseDir = process.env.DATA_DIR || __dirname;
 const uploadsDir = path.join(baseDir, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -107,17 +104,18 @@ function makeCaptchaSVG(text) {
 }
 
 app.get('/api/captcha', (req, res) => {
+  const type = req.query.type === 'register' ? 'register' : 'login';
   const text = randomCaptchaText(4);
-  req.session.captcha = text.toLowerCase();
+  req.session['captcha_' + type] = text.toLowerCase();
   res.type('image/svg+xml').send(makeCaptchaSVG(text));
 });
 
 app.post('/api/register', (req, res) => {
   const { name, password, captcha, deviceUUID } = req.body;
-  if (!req.session.captcha || req.session.captcha !== (captcha || '').toLowerCase()) {
+  if (!req.session.captcha_register || req.session.captcha_register !== (captcha || '').toLowerCase()) {
     return res.status(400).json({ error: '图形验证码错误' });
   }
-  req.session.captcha = null;
+  req.session.captcha_register = null;
   if (!nameValid(name)) return res.status(400).json({ error: '用户名须为2-20位中英文，不能含数字或特殊符号' });
   if (!password || password.length < 6) return res.status(400).json({ error: '密码至少6位' });
   if (db.prepare('SELECT id FROM users WHERE username = ?').get(name)) {
@@ -143,10 +141,10 @@ app.post('/api/register', (req, res) => {
 
 app.post('/api/login', (req, res) => {
   const { name, password, captcha } = req.body;
-  if (!req.session.captcha || req.session.captcha !== (captcha || '').toLowerCase()) {
+  if (!req.session.captcha_login || req.session.captcha_login !== (captcha || '').toLowerCase()) {
     return res.status(400).json({ error: '图形验证码错误' });
   }
-  req.session.captcha = null;
+  req.session.captcha_login = null;
   if (!name || !password) return res.status(400).json({ error: '请输入用户名和密码' });
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(name);
   if (!user) return res.status(400).json({ error: '该用户不存在' });

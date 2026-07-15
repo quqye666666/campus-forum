@@ -70,7 +70,7 @@
       <div class="form-group"><label>图形验证</label>
         <div class="code-input-wrap">
           <input type="text" id="loginCaptcha" placeholder="输入图中字符" maxlength="4">
-          <img id="loginCaptchaImg" class="captcha-img" src="/api/captcha" onclick="refreshCaptcha()" alt="点击刷新">
+            <img id="loginCaptchaImg" class="captcha-img" src="/api/captcha?type=login" onclick="refreshCaptcha()" alt="点击刷新">
         </div>
       </div>
       <div class="form-group"><label>密码</label><input type="password" id="loginPassword" placeholder="请输入密码" minlength="6" required></div>
@@ -82,7 +82,7 @@
       <div class="form-group"><label>图形验证</label>
         <div class="code-input-wrap">
           <input type="text" id="regCaptcha" placeholder="输入图中字符" maxlength="4" required>
-          <img id="regCaptchaImg" class="captcha-img" src="/api/captcha" onclick="refreshCaptcha()" alt="点击刷新">
+          <img id="regCaptchaImg" class="captcha-img" src="/api/captcha?type=register" onclick="refreshCaptcha()" alt="点击刷新">
         </div>
       </div>
       <div class="form-group"><label>设置密码</label><input type="password" id="regPassword" placeholder="至少6位" minlength="6" required></div>
