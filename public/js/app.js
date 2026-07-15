@@ -71,6 +71,17 @@ document.addEventListener('click', function(e) {
   setTimeout(function() { el.remove(); }, 600);
 });
 
+/* 设备UUID（每个设备一个，防同一设备注册多个账号） */
+function getDeviceUUID() {
+  var key = 'campus_device_uuid';
+  var uuid = localStorage.getItem(key);
+  if (!uuid) {
+    uuid = 'd' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem(key, uuid);
+  }
+  return uuid;
+}
+
 /* 认证 */
 function switchAuthTab(tab) {
   document.getElementById('loginTab').classList.toggle('active', tab === 'login');
@@ -79,35 +90,21 @@ function switchAuthTab(tab) {
   document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
   document.getElementById('loginError').style.display = 'none';
   document.getElementById('regError').style.display = 'none';
-  if (tab === 'login' && loginMode !== 'code') toggleLoginMode();
-  refreshCaptcha(tab);
-}
-
-var loginMode = 'code';
-
-function toggleLoginMode() {
-  loginMode = loginMode === 'code' ? 'password' : 'code';
-  var codeMode = loginMode === 'code';
-  document.getElementById('loginCodeMode').style.display = codeMode ? '' : 'none';
-  document.getElementById('loginPwdMode').style.display = codeMode ? 'none' : '';
-  document.getElementById('loginModeLink').textContent = codeMode ? '密码登录' : '验证码登录';
-  document.getElementById('loginError').style.display = 'none';
+  refreshCaptcha();
 }
 
 function handleLogin(e) {
   e.preventDefault();
-  var email = document.getElementById('loginEmail').value.trim();
+  var name = document.getElementById('loginName').value.trim();
+  var captcha = document.getElementById('loginCaptcha').value.trim();
+  var password = document.getElementById('loginPassword').value;
   var err = document.getElementById('loginError');
-  var body;
-  if (loginMode === 'password') {
-    body = { email: email, password: document.getElementById('loginPassword').value };
-  } else {
-    body = { email: email, code: document.getElementById('loginCode').value.trim() };
-  }
+  if (!name) { err.textContent = '请输入用户名'; err.style.display = 'block'; return false; }
+  if (!captcha) { err.textContent = '请输入图形验证码'; err.style.display = 'block'; return false; }
   fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ name: name, password: password, captcha: captcha })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -119,7 +116,7 @@ function handleLogin(e) {
       } else {
         err.textContent = r.data.error;
         err.style.display = 'block';
-        if (loginMode === 'code') refreshCaptcha('login');
+        refreshCaptcha();
       }
     }).catch(function(e) {
       console.log('login:', e);
@@ -131,24 +128,23 @@ function handleLogin(e) {
 
 function handleRegister(e) {
   e.preventDefault();
-  var email = document.getElementById('regEmail').value.trim();
   var name = document.getElementById('regName').value.trim();
-  var code = document.getElementById('regCode').value.trim();
+  var captcha = document.getElementById('regCaptcha').value.trim();
+  var password = document.getElementById('regPassword').value;
+  var confirm = document.getElementById('regConfirm').value;
   var err = document.getElementById('regError');
-  if (!/^[A-Za-z0-9._-]+@qq\.com$/i.test(email)) {
-    err.textContent = '请输入正确的QQ邮箱（如 123456@qq.com）';
-    err.style.display = 'block';
-    return false;
-  }
   if (!/^[\u4e00-\u9fa5a-zA-Z]{2,20}$/.test(name)) {
     err.textContent = '用户名须为2-20位中英文，不能含数字或特殊符号';
     err.style.display = 'block';
     return false;
   }
+  if (!captcha) { err.textContent = '请输入图形验证码'; err.style.display = 'block'; return false; }
+  if (password.length < 6) { err.textContent = '密码至少6位'; err.style.display = 'block'; return false; }
+  if (password !== confirm) { err.textContent = '两次密码输入不一致'; err.style.display = 'block'; return false; }
   fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, code: code, name: name })
+    body: JSON.stringify({ name: name, password: password, captcha: captcha, deviceUUID: getDeviceUUID() })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
@@ -160,7 +156,7 @@ function handleRegister(e) {
       } else {
         err.textContent = r.data.error;
         err.style.display = 'block';
-        refreshCaptcha('register');
+        refreshCaptcha();
       }
     }).catch(function(e) {
       console.log('register:', e);
@@ -170,67 +166,10 @@ function handleRegister(e) {
   return false;
 }
 
-var codeTimers = {};
-function sendCode(kind) {
-  var emailInput = document.getElementById(kind === 'login' ? 'loginEmail' : 'regEmail');
-  var email = (emailInput.value || '').trim();
-  var captcha = document.getElementById(kind === 'login' ? 'loginCaptcha' : 'regCaptcha').value.trim();
-  var err = document.getElementById(kind === 'login' ? 'loginError' : 'regError');
-  if (!/^[A-Za-z0-9._-]+@qq\.com$/i.test(email)) {
-    err.textContent = '请输入正确的QQ邮箱（如 123456@qq.com）';
-    err.style.display = 'block';
-    return;
-  }
-  if (!captcha) {
-    err.textContent = '请输入图形验证码';
-    err.style.display = 'block';
-    return;
-  }
-  err.style.display = 'none';
-  fetch('/api/send-code', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email, captcha: captcha, type: kind })
-  }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-    .then(function(r) {
-      if (!r.ok) {
-        err.textContent = r.data.error;
-        err.style.display = 'block';
-        refreshCaptcha(kind);
-        return;
-      }
-      if (r.data.devCode) showToast('验证码：' + r.data.devCode + '（开发模式）', 'success');
-      else showToast('验证码已发送', 'success');
-      startCodeCountdown(kind);
-      refreshCaptcha(kind);
-    }).catch(function(e) {
-      console.log('send-code:', e);
-      err.textContent = '网络错误，请检查服务是否正常运行';
-      err.style.display = 'block';
-    });
-}
-
-function refreshCaptcha(kind) {
-  var img = document.getElementById(kind === 'login' ? 'loginCaptchaImg' : 'regCaptchaImg');
-  if (img) img.src = '/api/captcha?type=' + kind + '&t=' + Date.now();
-}
-
-function startCodeCountdown(kind) {
-  var btn = document.getElementById(kind === 'login' ? 'loginSendBtn' : 'regSendBtn');
-  var left = 60;
-  btn.disabled = true;
-  btn.textContent = left + 's';
-  if (codeTimers[kind]) clearInterval(codeTimers[kind]);
-  codeTimers[kind] = setInterval(function() {
-    left--;
-    if (left <= 0) {
-      clearInterval(codeTimers[kind]);
-      btn.disabled = false;
-      btn.textContent = '获取验证码';
-    } else {
-      btn.textContent = left + 's';
-    }
-  }, 1000);
+function refreshCaptcha() {
+  [].forEach.call(document.querySelectorAll('.captcha-img'), function(img) {
+    img.src = '/api/captcha?t=' + Date.now();
+  });
 }
 
 function handleLogout() {

@@ -201,6 +201,15 @@ if (!smsCols.includes('email')) {
   db.exec('ALTER TABLE sms_codes ADD COLUMN email TEXT DEFAULT ""');
 }
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS device_registrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    device_uuid TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 const defaultSections = [
   { name: '校园动态', icon: '🏫', description: '校园热门动态' },
   { name: '学习交流', icon: '📚', description: '课程讨论、学习心得' },

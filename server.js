@@ -68,57 +68,8 @@ app.get('/api/online', (req, res) => {
 
 // ========== 用户相关 API ==========
 
-function genCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-function emailValid(email) {
-  return /^[A-Za-z0-9._-]+@qq\.com$/i.test(email || '');
-}
-
 function nameValid(name) {
   return typeof name === 'string' && /^[\u4e00-\u9fa5a-zA-Z]{2,20}$/.test(name);
-}
-
-function verifyCode(email, code) {
-  const row = db.prepare("SELECT * FROM sms_codes WHERE email = ? AND code = ? AND expires_at > datetime('now')").get(email, code);
-  return !!row;
-}
-
-const QQ_SENDER = '3110735899@qq.com';
-const QQ_AUTH = process.env.QQ_EMAIL_AUTH || process.env.qqname || '';
-
-function sendCodeEmail(email, code) {
-  if (!QQ_AUTH) {
-    console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
-    return Promise.resolve({ error: 'QQ_AUTH 未设置（开发模式）' });
-  }
-  let nodemailer;
-  try { nodemailer = require('nodemailer'); }
-  catch (e) { console.error('nodemailer 未安装，无法发送邮件'); return Promise.resolve({ error: 'nodemailer 未安装: ' + e.message }); }
-  return new Promise(function(resolve) {
-    dns.lookup('smtp.qq.com', { family: 4 }, function(err, address) {
-      if (err) { resolve({ error: 'DNS解析失败: ' + err.message }); return; }
-      const transporter = nodemailer.createTransport({
-        host: address,
-        port: 25,
-        secure: false,
-        requireTLS: true,
-        tls: { servername: 'smtp.qq.com' },
-        auth: { user: QQ_SENDER, pass: QQ_AUTH },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000
-      });
-      transporter.sendMail({
-        from: QQ_SENDER,
-        to: email,
-        subject: '邮箱验证码',
-        text: '您的验证码是：' + code + '，5分钟内有效，请勿泄露。',
-        html: '<p>您的验证码是：<b>' + code + '</b></p><p>5分钟内有效，请勿泄露给他人。</p>'
-      }).then(function() { resolve(true); }).catch(function(e) { resolve({ error: String((e && e.message) || e) }); });
-    });
-  });
 }
 
 /* ========== 图形验证码（人机验证） ========== */
@@ -156,71 +107,51 @@ function makeCaptchaSVG(text) {
 }
 
 app.get('/api/captcha', (req, res) => {
-  const type = req.query.type === 'register' ? 'register' : 'login';
   const text = randomCaptchaText(4);
-  req.session['captcha_' + type] = text.toLowerCase();
+  req.session.captcha = text.toLowerCase();
   res.type('image/svg+xml').send(makeCaptchaSVG(text));
 });
 
-app.post('/api/send-code', async (req, res) => {
-  const { email, captcha, type } = req.body;
-  const ck = 'captcha_' + (type === 'register' ? 'register' : 'login');
-  if (!req.session[ck] || req.session[ck] !== (captcha || '').toLowerCase()) {
+app.post('/api/register', (req, res) => {
+  const { name, password, captcha, deviceUUID } = req.body;
+  if (!req.session.captcha || req.session.captcha !== (captcha || '').toLowerCase()) {
     return res.status(400).json({ error: '图形验证码错误' });
   }
-  req.session[ck] = null;
-  if (!emailValid(email)) {
-    return res.status(400).json({ error: '请输入正确的QQ邮箱（如 123456@qq.com）' });
-  }
-  const code = genCode();
-  db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
-  db.prepare("INSERT INTO sms_codes (phone, email, code, expires_at) VALUES (?, ?, ?, datetime('now', '+5 minutes'))").run(email, email, code);
-  if (!QQ_AUTH) {
-    console.log('[DEV] 邮箱验证码 ' + email + ' => ' + code);
-    return res.json({ ok: true, devCode: code, message: '验证码已发送（开发模式，请使用下方显示的验证码）' });
-  }
-  const r = await sendCodeEmail(email, code);
-  if (r === true) return res.json({ ok: true, message: '验证码已发送，请查收邮件' });
-  return res.json({ ok: true, devCode: code, message: '邮件发送失败: ' + ((r && r.error) || 'unknown') });
-});
-
-app.post('/api/register', (req, res) => {
-  const { email, code, name } = req.body;
-  if (!emailValid(email)) return res.status(400).json({ error: '请输入正确的QQ邮箱（如 123456@qq.com）' });
+  req.session.captcha = null;
   if (!nameValid(name)) return res.status(400).json({ error: '用户名须为2-20位中英文，不能含数字或特殊符号' });
-  if (!code) return res.status(400).json({ error: '请输入验证码' });
+  if (!password || password.length < 6) return res.status(400).json({ error: '密码至少6位' });
   if (db.prepare('SELECT id FROM users WHERE username = ?').get(name)) {
     return res.status(400).json({ error: '该用户名已被占用' });
   }
-  if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
-    return res.status(400).json({ error: '该邮箱已注册，请直接登录' });
+  if (deviceUUID) {
+    const existing = db.prepare('SELECT user_id FROM device_registrations WHERE device_uuid = ?').get(deviceUUID);
+    if (existing) return res.status(400).json({ error: '该设备已注册过账号，每个设备只允许注册一个账号' });
   }
-  if (!verifyCode(email, code)) return res.status(400).json({ error: '验证码错误或已过期' });
   try {
-    const hashed = bcrypt.hashSync(Math.random().toString(36), 10);
-    const result = db.prepare('INSERT INTO users (username, password, nickname, email) VALUES (?, ?, ?, ?)').run(name, hashed, name, email);
-    db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
+    const hashed = bcrypt.hashSync(password, 10);
+    const result = db.prepare('INSERT INTO users (username, password, nickname, email) VALUES (?, ?, ?, NULL)').run(name, hashed, name);
+    if (deviceUUID) {
+      db.prepare('INSERT INTO device_registrations (device_uuid, user_id) VALUES (?, ?)').run(deviceUUID, result.lastInsertRowid);
+    }
     req.session.userId = result.lastInsertRowid;
     res.json({ id: result.lastInsertRowid, username: name, nickname: name, avatar: 'default' });
   } catch (e) {
-    if (e.message.includes('UNIQUE')) return res.status(400).json({ error: '该用户名或邮箱已被占用' });
+    if (e.message.includes('UNIQUE')) return res.status(400).json({ error: '该用户名已被占用' });
     res.status(500).json({ error: '注册失败' });
   }
 });
 
 app.post('/api/login', (req, res) => {
-  const { email, code, password } = req.body;
-  if (!emailValid(email)) return res.status(400).json({ error: '请输入正确的QQ邮箱（如 123456@qq.com）' });
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  if (!user) return res.status(400).json({ error: '该邮箱尚未注册，请先注册' });
-  if (password) {
-    if (!user.password || !bcrypt.compareSync(password, user.password)) {
-      return res.status(400).json({ error: '密码错误' });
-    }
-  } else {
-    if (!code) return res.status(400).json({ error: '请输入验证码' });
-    if (!verifyCode(email, code)) return res.status(400).json({ error: '验证码错误或已过期' });
-    db.prepare('DELETE FROM sms_codes WHERE email = ?').run(email);
+  const { name, password, captcha } = req.body;
+  if (!req.session.captcha || req.session.captcha !== (captcha || '').toLowerCase()) {
+    return res.status(400).json({ error: '图形验证码错误' });
+  }
+  req.session.captcha = null;
+  if (!name || !password) return res.status(400).json({ error: '请输入用户名和密码' });
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(name);
+  if (!user) return res.status(400).json({ error: '该用户不存在' });
+  if (!user.password || !bcrypt.compareSync(password, user.password)) {
+    return res.status(400).json({ error: '密码错误' });
   }
   req.session.userId = user.id;
   res.json({ id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, school: user.school, bio: user.bio });

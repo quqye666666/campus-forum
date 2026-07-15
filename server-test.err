@@ -1,0 +1,37 @@
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+Unhandled error: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at parse (C:\Users\quq\Desktop\campus-forum\node_modules\body-parser\lib\types\json.js:91:21)
+    at C:\Users\quq\Desktop\campus-forum\node_modules\body-parser\lib\read.js:162:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+    at invokeCallback (C:\Users\quq\Desktop\campus-forum\node_modules\raw-body\index.js:238:16)
+    at done (C:\Users\quq\Desktop\campus-forum\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (C:\Users\quq\Desktop\campus-forum\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:509:28)
+    at endReadableNT (node:internal/streams/readable:1729:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  expose: true,
+  statusCode: 400,
+  status: 400,
+  body: '{email:123456@qq.com,captcha:rMbe,type:register}',
+  type: 'entity.parse.failed'
+}
+邮件发送失败 Error: Invalid login: 535 Login fail. Account is abnormal, service is not open, password is incorrect, login frequency limited, or system is busy. More information at https://help.mail.qq.com/detail/108/1023
+    at SMTPConnection._formatError (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:938:19)
+    at SMTPConnection._actionAUTHComplete (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:1784:34)
+    at SMTPConnection.<anonymous> (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:669:26)
+    at SMTPConnection._processResponse (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:1150:20)
+    at SMTPConnection._onData (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:898:14)
+    at SMTPConnection._onSocketData (C:\Users\quq\Desktop\campus-forum\node_modules\nodemailer\lib\smtp-connection\index.js:224:44)
+    at TLSSocket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5) {
+  code: 'EAUTH',
+  response: '535 Login fail. Account is abnormal, service is not open, password is incorrect, login frequency limited, or system is busy. More information at https://help.mail.qq.com/detail/108/1023',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
+[WARN] 邮件发送失败，回退返回验证码供使用
