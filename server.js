@@ -111,7 +111,7 @@ app.get('/api/captcha', (req, res) => {
 });
 
 app.post('/api/register', (req, res) => {
-  const { name, password, captcha, deviceUUID } = req.body;
+  const { name, password, captcha } = req.body;
   if (!req.session.captcha_register || req.session.captcha_register !== (captcha || '').toLowerCase()) {
     return res.status(400).json({ error: '图形验证码错误' });
   }
@@ -121,16 +121,9 @@ app.post('/api/register', (req, res) => {
   if (db.prepare('SELECT id FROM users WHERE username = ?').get(name)) {
     return res.status(400).json({ error: '该用户名已被占用' });
   }
-  if (deviceUUID) {
-    const existing = db.prepare('SELECT user_id FROM device_registrations WHERE device_uuid = ?').get(deviceUUID);
-    if (existing) return res.status(400).json({ error: '该设备已注册过账号，每个设备只允许注册一个账号' });
-  }
   try {
     const hashed = bcrypt.hashSync(password, 10);
     const result = db.prepare('INSERT INTO users (username, password, nickname, email) VALUES (?, ?, ?, NULL)').run(name, hashed, name);
-    if (deviceUUID) {
-      db.prepare('INSERT INTO device_registrations (device_uuid, user_id) VALUES (?, ?)').run(deviceUUID, result.lastInsertRowid);
-    }
     req.session.userId = result.lastInsertRowid;
     res.json({ id: result.lastInsertRowid, username: name, nickname: name, avatar: 'default' });
   } catch (e) {

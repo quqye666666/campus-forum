@@ -71,17 +71,6 @@ document.addEventListener('click', function(e) {
   setTimeout(function() { el.remove(); }, 600);
 });
 
-/* 设备UUID（每个设备一个，防同一设备注册多个账号） */
-function getDeviceUUID() {
-  var key = 'campus_device_uuid';
-  var uuid = localStorage.getItem(key);
-  if (!uuid) {
-    uuid = 'd' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem(key, uuid);
-  }
-  return uuid;
-}
-
 /* 认证 */
 function switchAuthTab(tab) {
   document.getElementById('loginTab').classList.toggle('active', tab === 'login');
@@ -144,7 +133,7 @@ function handleRegister(e) {
   fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name, password: password, captcha: captcha, deviceUUID: getDeviceUUID() })
+    body: JSON.stringify({ name: name, password: password, captcha: captcha })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
