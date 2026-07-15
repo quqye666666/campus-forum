@@ -707,6 +707,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
+process.on('uncaughtException', (err) => {
+  console.error('FATAL:', err.stack || err.message);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('REJECTION:', reason);
+});
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`校园论坛已启动: http://0.0.0.0:${PORT}`);
+  console.log('SERVER STARTED OK - port=' + PORT + ' pid=' + process.pid);
+}).on('error', (err) => {
+  console.error('LISTEN ERROR:', err.message);
+  process.exit(1);
 });
