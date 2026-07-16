@@ -131,19 +131,24 @@ app.get('/api/captcha', (req, res) => {
 });
 
 app.post('/api/register', (req, res) => {
-  const { name, password, captcha } = req.body;
+  const { name, password, captcha, device_uuid } = req.body;
   if (!req.session.captcha_register || req.session.captcha_register !== (captcha || '').toLowerCase()) {
     return res.status(400).json({ error: '图形验证码错误' });
   }
   req.session.captcha_register = null;
   if (!nameValid(name)) return res.status(400).json({ error: '用户名须为2-20位中英文，不能含数字或特殊符号' });
   if (!password || password.length < 6) return res.status(400).json({ error: '密码至少6位' });
+  if (!device_uuid) return res.status(400).json({ error: '设备标识缺失，无法完成注册' });
+  // 每个设备（device_uuid）只允许注册一个账号
+  if (db.prepare('SELECT id FROM users WHERE device_uuid = ?').get(device_uuid)) {
+    return res.status(400).json({ error: '该设备已注册过账号，每个设备仅限注册一个' });
+  }
   if (db.prepare('SELECT id FROM users WHERE username = ?').get(name)) {
     return res.status(400).json({ error: '该用户名已被占用' });
   }
   try {
     const hashed = bcrypt.hashSync(password, 10);
-    const result = db.prepare('INSERT INTO users (username, password, nickname, email) VALUES (?, ?, ?, NULL)').run(name, hashed, name);
+    const result = db.prepare('INSERT INTO users (username, password, nickname, email, device_uuid) VALUES (?, ?, ?, NULL, ?)').run(name, hashed, name, device_uuid);
     req.session.userId = result.lastInsertRowid;
     res.json({ id: result.lastInsertRowid, username: name, nickname: name, avatar: 'default' });
   } catch (e) {

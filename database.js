@@ -164,6 +164,9 @@ if (!userColumns.includes('signature')) {
 if (!userColumns.includes('last_active')) {
   db.exec('ALTER TABLE users ADD COLUMN last_active DATETIME');
 }
+if (!userColumns.includes('device_uuid')) {
+  db.exec('ALTER TABLE users ADD COLUMN device_uuid TEXT DEFAULT ""');
+}
 
 const postColumns = db.prepare("PRAGMA table_info(posts)").all().map(c => c.name);
 if (!postColumns.includes('media_type')) {

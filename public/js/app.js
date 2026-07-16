@@ -72,6 +72,20 @@ document.addEventListener('click', function(e) {
 });
 
 /* 认证 */
+function getDeviceUUID() {
+  var key = 'campus_forum_device_uuid';
+  var id = localStorage.getItem(key);
+  if (!id) {
+    try {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('dev-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    } catch (e) {
+      id = 'dev-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 function switchAuthTab(tab) {
   document.getElementById('loginTab').classList.toggle('active', tab === 'login');
   document.getElementById('registerTab').classList.toggle('active', tab === 'register');
@@ -133,7 +147,7 @@ function handleRegister(e) {
   fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name, password: password, captcha: captcha })
+    body: JSON.stringify({ name: name, password: password, captcha: captcha, device_uuid: getDeviceUUID() })
   }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
     .then(function(r) {
       if (r.ok) {
