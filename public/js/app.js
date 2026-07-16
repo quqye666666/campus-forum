@@ -1127,8 +1127,6 @@ function openSettings() { document.getElementById('settingsModal').classList.add
 function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
 
 /* Pro 弹窗 */
-function openPro() { document.getElementById('proModal').classList.add('show'); }
-function closePro() { document.getElementById('proModal').classList.remove('show'); }
 
 /* 点击弹层遮罩关闭 */
 document.querySelectorAll('.yzrt-modal').forEach(function(m) {
