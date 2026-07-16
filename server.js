@@ -24,11 +24,13 @@ try {
   process.exit(1);
 }
 
-const baseDir = process.env.DATA_DIR || __dirname;
+// Railway 容器里项目目录是只读的，必须写到 DATA_DIR 挂载的持久卷（或 /tmp）
+const baseDir = process.env.DATA_DIR || (fs.existsSync('/tmp') ? '/tmp' : __dirname);
 const uploadsDir = path.join(baseDir, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+console.log('baseDir=' + baseDir + ' uploadsDir=' + uploadsDir);
 
 const app = express();
 const PORT = process.env.PORT || 3000;

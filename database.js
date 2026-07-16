@@ -1,7 +1,10 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
-const db = new Database(path.join(process.env.DATA_DIR || __dirname, 'forum.db'));
+const DATA_DIR = process.env.DATA_DIR || (fs.existsSync('/tmp') ? '/tmp' : __dirname);
+const db = new Database(path.join(DATA_DIR, 'forum.db'));
+console.log('DB path=' + path.join(DATA_DIR, 'forum.db'));
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
