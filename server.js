@@ -14,6 +14,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
+const https = require('https');
+const { spawn } = require('child_process');
 
 let db;
 try {
@@ -732,8 +734,52 @@ process.on('unhandledRejection', (reason) => {
   console.error('REJECTION:', reason);
 });
 
+function startCloudflareTunnel() {
+  const cf = '/tmp/cloudflared';
+  const port = process.env.PORT || 3000;
+  const download = (url) => {
+    https.get(url, (res) => {
+      if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location) {
+        download(res.headers.location);
+        return;
+      }
+      if (res.statusCode !== 200) {
+        console.log('TUNNEL: cloudflared download failed status=' + res.statusCode);
+        return;
+      }
+      const file = fs.createWriteStream(cf);
+      res.pipe(file);
+      file.on('finish', () => {
+        file.close(() => {
+          fs.chmodSync(cf, 0o755);
+          launchTunnel(cf, port);
+        });
+      });
+    }).on('error', (e) => {
+      console.log('TUNNEL: download error ' + e.message);
+    });
+  };
+  if (fs.existsSync(cf) && fs.statSync(cf).size > 50000) {
+    launchTunnel(cf, port);
+    return;
+  }
+  console.log('TUNNEL: downloading cloudflared...');
+  download('https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64');
+}
+
+function launchTunnel(cf, port) {
+  const t = spawn(cf, ['tunnel', '--url', 'http://localhost:' + port, '--no-autoupdate'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const log = (d) => process.stdout.write('[tunnel] ' + d);
+  t.stdout.on('data', log);
+  t.stderr.on('data', log);
+  t.on('exit', (code) => console.log('TUNNEL: cloudflared exited code=' + code));
+}
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('SERVER STARTED OK - port=' + PORT + ' pid=' + process.pid);
+  if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID || process.env.CLOUDFLARE_TUNNEL === '1') {
+    startCloudflareTunnel();
+  }
 }).on('error', (err) => {
   console.error('LISTEN ERROR:', err.message);
   process.exit(1);
