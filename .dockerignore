@@ -1,0 +1,8 @@
+node_modules
+.git
+forum.db
+forum.db-*
+*.log
+.DS_Store
+server-test.js
+server.js.bak
