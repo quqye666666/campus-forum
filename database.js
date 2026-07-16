@@ -176,17 +176,18 @@ if (!userColumns.includes('phone')) {
   db.exec('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ""');
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sms_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone TEXT NOT NULL,
-    code TEXT NOT NULL,
-    expires_at DATETIME NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sms_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT NOT NULL,
+      code TEXT NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
-const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NULL").all();
+  const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NULL").all();
   empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
 
@@ -200,7 +201,6 @@ const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NU
   if (!smsCols.includes('email')) {
     db.exec('ALTER TABLE sms_codes ADD COLUMN email TEXT DEFAULT ""');
   }
-
 } catch (e) {
   console.error('Database migration error (non-fatal):', e.message);
 }
