@@ -187,18 +187,22 @@ db.exec(`
 `);
 
 const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NULL").all();
-empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
-db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
+  empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
 
-if (!userColumns.includes('email')) {
-  db.exec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
-}
-db.prepare("UPDATE users SET email = NULL WHERE email = '' OR email IS NULL").run();
-db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+  if (!userColumns.includes('email')) {
+    db.exec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
+  }
+  db.prepare("UPDATE users SET email = NULL WHERE email = '' OR email IS NULL").run();
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)');
 
-const smsCols = db.prepare("PRAGMA table_info(sms_codes)").all().map(c => c.name);
-if (!smsCols.includes('email')) {
-  db.exec('ALTER TABLE sms_codes ADD COLUMN email TEXT DEFAULT ""');
+  const smsCols = db.prepare("PRAGMA table_info(sms_codes)").all().map(c => c.name);
+  if (!smsCols.includes('email')) {
+    db.exec('ALTER TABLE sms_codes ADD COLUMN email TEXT DEFAULT ""');
+  }
+
+} catch (e) {
+  console.error('Database migration error (non-fatal):', e.message);
 }
 
 const defaultSections = [

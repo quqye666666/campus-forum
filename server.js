@@ -1,11 +1,29 @@
 // campus-forum server entry
+process.on('uncaughtException', (err) => {
+  console.error('FATAL uncaughtException:', err.stack || err.message);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('FATAL unhandledRejection:', reason);
+  process.exit(1);
+});
+
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const db = require('./database');
+
+let db;
+try {
+  db = require('./database');
+  console.log('Database initialized OK');
+} catch (e) {
+  console.error('Database init FAILED:', e.stack || e.message);
+  process.exit(1);
+}
+
 const baseDir = process.env.DATA_DIR || __dirname;
 const uploadsDir = path.join(baseDir, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
