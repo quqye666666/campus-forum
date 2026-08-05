@@ -99,16 +99,21 @@ app.post('/api/ai/chat', requireAuth, async (req, res) => {
   if (!safeMessages.length || safeMessages[safeMessages.length - 1].role !== 'user') {
     return res.status(400).json({ error: '请输入消息' });
   }
+  const requestBody = {
+    model: zayuModel,
+    messages: [{ role: 'system', content: '你是昆山市张浦高级中学校园论坛的 AI 助手。使用中文，回答清晰、友善、简洁。' }, ...safeMessages],
+    temperature: 0.7
+  };
+  function readContent(value) {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map(item => typeof item === 'string' ? item : item?.text || item?.content || '').join('');
+    return '';
+  }
   try {
     const response = await fetch(zayuApiBase.replace(/\/$/, '') + '/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + zayuApiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: zayuModel,
-        messages: [{ role: 'system', content: '你是昆山市张浦高级中学校园论坛的 AI 助手。使用中文，回答清晰、友善、简洁。' }, ...safeMessages],
-        temperature: 0.7,
-        stream: true
-      })
+      body: JSON.stringify({ ...requestBody, stream: true })
     });
     if (!response.ok) {
       const text = await response.text();
@@ -116,29 +121,51 @@ app.post('/api/ai/chat', requireAuth, async (req, res) => {
       try { message = JSON.parse(text).error?.message || message; } catch (e) {}
       return res.status(502).json({ error: message });
     }
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders();
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let finished = false;
+    let content = '';
+    let headersSent = false;
+    const writeContent = (chunk) => {
+      if (!chunk) return;
+      if (!headersSent) {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-transform');
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders();
+        headersSent = true;
+      }
+      content += chunk;
+      res.write(chunk);
+    };
+    const parseLine = (line) => {
+      if (!line.startsWith('data:')) return;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') return;
+      try {
+        writeContent(readContent(JSON.parse(payload).choices?.[0]?.delta?.content));
+      } catch (e) {}
+    };
     while (!finished) {
       const result = await reader.read();
       finished = result.done;
       buffer += decoder.decode(result.value || new Uint8Array(), { stream: !finished });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
-        try {
-          const chunk = JSON.parse(payload).choices?.[0]?.delta?.content;
-          if (chunk) res.write(chunk);
-        } catch (e) {}
-      }
+      lines.forEach(parseLine);
+    }
+    if (buffer) parseLine(buffer);
+    if (!content) {
+      const fallback = await fetch(zayuApiBase.replace(/\/$/, '') + '/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + zayuApiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      const fallbackData = await fallback.json();
+      const fallbackContent = readContent(fallbackData.choices?.[0]?.message?.content);
+      if (!fallback.ok || !fallbackContent) return res.status(502).json({ error: fallbackData.error?.message || 'AI 返回内容为空' });
+      writeContent(fallbackContent);
     }
     res.end();
   } catch (e) {
