@@ -208,6 +208,9 @@ function showMainPage() {
   document.getElementById('mainPage').style.display = 'block';
   document.getElementById('searchPage').style.display = 'none';
   document.getElementById('profilePage').style.display = 'none';
+  document.getElementById('aiPage').style.display = 'none';
+  document.getElementById('aiPage').setAttribute('aria-hidden', 'true');
+  document.getElementById('aiFab').style.display = '';
   document.getElementById('postComposer').style.display = '';
   document.getElementById('postsList').style.display = '';
   document.getElementById('loadingMore').style.display = '';
@@ -222,6 +225,9 @@ function showProfile(userId) {
   document.getElementById('mainPage').style.display = 'none';
   document.getElementById('searchPage').style.display = 'none';
   document.getElementById('profilePage').style.display = 'block';
+  document.getElementById('aiPage').style.display = 'none';
+  document.getElementById('aiPage').setAttribute('aria-hidden', 'true');
+  document.getElementById('aiFab').style.display = '';
   document.getElementById('profileEditForm').classList.remove('show');
   currentProfileUserId = userId;
   loadProfile(userId);
@@ -499,16 +505,22 @@ function createPost() {
 }
 
 function openAIChat() {
-  var modal = document.getElementById('aiModal');
-  modal.classList.add('show');
-  modal.setAttribute('aria-hidden', 'false');
+  hideAll();
+  var page = document.getElementById('aiPage');
+  page.style.display = 'block';
+  page.setAttribute('aria-hidden', 'false');
+  document.getElementById('aiFab').style.display = 'none';
   setTimeout(function() { document.getElementById('aiInput').focus(); }, 100);
 }
 
 function closeAIChat() {
-  var modal = document.getElementById('aiModal');
-  modal.classList.remove('show');
-  modal.setAttribute('aria-hidden', 'true');
+  showMainPage();
+}
+
+function fillAIPrompt(text) {
+  var input = document.getElementById('aiInput');
+  input.value = text;
+  input.focus();
 }
 
 function appendAIMessage(role, content, loading) {
@@ -975,6 +987,8 @@ function hideAll() {
   document.getElementById('mainPage').style.display = 'none';
   document.getElementById('profilePage').style.display = 'none';
   document.getElementById('searchPage').style.display = 'none';
+  document.getElementById('aiPage').style.display = 'none';
+  document.getElementById('aiPage').setAttribute('aria-hidden', 'true');
 }
 
 function closeChat() {

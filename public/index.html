@@ -275,19 +275,38 @@
   </div>
 
   <button class="ai-fab" id="aiFab" onclick="openAIChat()" title="AI 助手" aria-label="打开 AI 助手">AI</button>
-  <div class="ai-modal" id="aiModal" aria-hidden="true" onclick="if(event.target===this)closeAIChat()">
-    <div class="ai-card">
-      <div class="ai-header">
-        <div class="ai-header-identity"><div class="ai-header-avatar">AI</div><div><strong>校园 AI</strong><span>在线</span></div></div>
-        <button class="ai-close" onclick="closeAIChat()" title="关闭">&times;</button>
+  <div class="ai-page" id="aiPage" aria-hidden="true">
+    <div class="ai-page-shell">
+      <header class="ai-page-header">
+        <button class="ai-back" onclick="closeAIChat()" title="返回论坛"><span>&larr;</span> 返回论坛</button>
+        <div class="ai-page-title"><span class="ai-live-mark"></span><strong>校园 AI</strong><span>INTELLIGENCE CONSOLE</span></div>
+        <div class="ai-page-meta"><span class="ai-status-dot"></span> ONLINE</div>
+      </header>
+      <div class="ai-workspace">
+        <aside class="ai-sidepanel">
+          <div class="ai-brand-block"><div class="ai-brand-avatar">AI</div><div><div class="ai-brand-name">张浦 AI</div><div class="ai-brand-sub">CAMPUS CORE / 01</div></div></div>
+          <div class="ai-side-rule"></div>
+          <div class="ai-side-label">CURRENT MODEL</div>
+          <div class="ai-model-chip"><span class="ai-model-pulse"></span><span>GPT-5.6 SOL</span><small>READY</small></div>
+          <div class="ai-side-label">QUICK START</div>
+          <button class="ai-prompt-chip" onclick="fillAIPrompt('帮我制定一个高效的学习计划')">学习计划 <span>&rarr;</span></button>
+          <button class="ai-prompt-chip" onclick="fillAIPrompt('帮我写一个单文件 HTML 小游戏')">写一个小游戏 <span>&rarr;</span></button>
+          <button class="ai-prompt-chip" onclick="fillAIPrompt('帮我把这段代码找出问题并修好')">检查代码 <span>&rarr;</span></button>
+          <div class="ai-side-footer"><span>SECURE SESSION</span><span class="ai-footer-line"></span><span>LOCAL / PRIVATE</span></div>
+        </aside>
+        <main class="ai-console">
+          <div class="ai-console-heading"><div><span class="ai-kicker">CONVERSATION</span><h2>和校园 AI 对话</h2></div><span class="ai-session-id">SESSION / ACTIVE</span></div>
+          <div class="ai-messages" id="aiMessages">
+            <div class="ai-message-row assistant"><div class="ai-avatar">AI</div><div class="ai-message-body"><div class="ai-message-name">校园 AI <span>刚刚</span></div><div class="ai-message">你好，我是张浦校园 AI。可以帮你学习、写代码或制作小游戏。</div></div></div>
+          </div>
+          <form class="ai-input-area" onsubmit="return sendAIMessage(event)">
+            <div class="ai-input-prefix">&gt;_</div>
+            <textarea id="aiInput" rows="2" maxlength="4000" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage(event)}" required></textarea>
+            <button class="ai-send-btn" id="aiSendBtn" type="submit" title="发送">发送 <span>&uarr;</span></button>
+          </form>
+          <div class="ai-input-note">AI 生成内容仅供参考 <span>SHIFT + ENTER 换行</span></div>
+        </main>
       </div>
-      <div class="ai-messages" id="aiMessages">
-        <div class="ai-message-row assistant"><div class="ai-avatar">AI</div><div class="ai-message-body"><div class="ai-message-name">校园 AI</div><div class="ai-message">你好，有什么可以帮你？</div></div></div>
-      </div>
-      <form class="ai-input-area" onsubmit="return sendAIMessage(event)">
-        <textarea id="aiInput" rows="2" maxlength="4000" placeholder="输入消息..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage(event)}" required></textarea>
-        <button class="btn btn-primary btn-sm" id="aiSendBtn" type="submit">发送</button>
-      </form>
     </div>
   </div>
 
