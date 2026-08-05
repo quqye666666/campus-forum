@@ -19,7 +19,6 @@ var onlineInterval = null;
   }).catch(function(e) { console.log('init:', e); });
 })();
 
-/* 背景轮播 */
 function loadBgList() {
   bgList = [
     'L1.png', 'Bg_1.png', 'Bg_2.png', 'Bg_3.png',
@@ -51,7 +50,6 @@ function applyBg() {
   if (ap) ap.style.backgroundImage = 'url(' + url + ')';
 }
 
-/* 按钮涟漪 */
 document.addEventListener('click', function(e) {
   var el = e.target;
   while (el && el !== document.body) {
@@ -71,7 +69,6 @@ document.addEventListener('click', function(e) {
   setTimeout(function() { el.remove(); }, 600);
 });
 
-/* 认证 */
 function getDeviceUUID() {
   var key = 'campus_forum_device_uuid';
   var id = localStorage.getItem(key);
@@ -203,7 +200,6 @@ function updateOnlineCount() {
   }).catch(function() {});
 }
 
-/* 页面切换 */
 function showMainPage() {
   document.getElementById('mainPage').style.display = 'block';
   document.getElementById('searchPage').style.display = 'none';
@@ -233,7 +229,6 @@ function goMyProfile(e) {
   if (currentUser) showProfile(currentUser.id);
 }
 
-/* Toast */
 var toastTimer;
 function showToast(msg, type) {
   var t = document.getElementById('toast');
@@ -243,7 +238,6 @@ function showToast(msg, type) {
   toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 
-/* 下拉菜单 */
 function toggleUserDropdown(e) {
   e.stopPropagation();
   var d = document.getElementById('userDropdown');
@@ -259,7 +253,6 @@ function closeDropdown() {
 
 document.addEventListener('click', function() { closeDropdown(); });
 
-/* 加载分区 */
 var _sectionsCache;
 function loadSections() {
   fetch('/api/sections').then(function(r) { return r.json(); }).then(function(sections) {
@@ -301,7 +294,6 @@ function showMainPageHiddenParts() {
   document.getElementById('profilePage').style.display = 'none';
 }
 
-/* 加载帖子 */
 function loadPosts() {
   if (isLoadingPosts || !hasMorePosts) return;
   isLoadingPosts = true;
@@ -404,7 +396,6 @@ function buildCard(post) {
   return div;
 }
 
-/* 评论 */
 function toggleComments(pid) {
   var sec = document.getElementById('comments-' + pid);
   if (sec.classList.contains('show')) { sec.classList.remove('show'); return; }
@@ -440,7 +431,6 @@ function submitComment(pid) {
     }).catch(function(e) { console.log('submitComment:', e); });
 }
 
-/* 点赞 */
 function toggleLike(pid, btnEl) {
   if (!currentUser) { showToast('请先登录', 'error'); return; }
   fetch('/api/posts/' + pid + '/like', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(data) {
@@ -459,7 +449,6 @@ function toggleLike(pid, btnEl) {
   }).catch(function(e) { console.log('toggleLike:', e); });
 }
 
-/* 发布 */
 function createPost() {
   if (pollActive) {
     createPoll();
@@ -506,7 +495,6 @@ function createPoll() {
   }).catch(function(e) { console.log('createPoll:', e); });
 }
 
-/* 删除 */
 function deletePost(pid) {
   if (!confirm('确定删除？')) return;
   fetch('/api/posts/' + pid, { method: 'DELETE' }).then(function(r) { return r.json(); }).then(function() {
@@ -516,7 +504,6 @@ function deletePost(pid) {
   }).catch(function(e) { console.log('deletePost:', e); });
 }
 
-/* 收藏 */
 function toggleSave(pid, btn) {
   if (!currentUser) { showToast('请先登录', 'error'); return; }
   fetch('/api/posts/' + pid + '/save', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
@@ -526,7 +513,6 @@ function toggleSave(pid, btn) {
   });
 }
 
-/* 分享 */
 function sharePost(e, pid) {
   e.stopPropagation();
   var url = location.origin + '/?post=' + pid;
@@ -543,7 +529,6 @@ function sharePost(e, pid) {
   }
 }
 
-/* 编辑 */
 function editPost(pid) {
   var card = document.getElementById('post-' + pid);
   var contentEl = card.querySelector('.post-content');
@@ -569,7 +554,6 @@ function cancelEdit(pid, origText) {
   document.getElementById('post-' + pid).querySelector('.post-content').innerHTML = origText;
 }
 
-/* 图片 */
 function previewImages() {
   var files = document.getElementById('imageInput').files;
   if (!files.length) return;
@@ -600,7 +584,6 @@ function removeImage() {
   document.getElementById('imagePreview').style.display = 'none';
 }
 
-/* 个人主页 */
 function loadProfile(uid) {
   fetch('/api/user/' + uid).then(function(r) { return r.json(); }).then(function(user) {
     if (!user) return;
@@ -725,7 +708,6 @@ function saveProfile() {
   }).catch(function(e) { console.log('saveProfile:', e); });
 }
 
-/* 头像上传 */
 function uploadAvatar() {
   var file = document.getElementById('avatarInput').files[0];
   if (!file) return;
@@ -760,7 +742,6 @@ function toggleFollow(uid) {
   }).catch(function(e) { console.log('follow:', e); });
 }
 
-/* 搜索 */
 function searchPosts() {
   var q = document.getElementById('searchInput').value.trim();
   if (!q) return;
@@ -775,7 +756,6 @@ function searchPosts() {
   }).catch(function(e) { console.log('search:', e); });
 }
 
-/* 无限滚动 */
 function setupScroll() {
   window.addEventListener('scroll', function() {
     var mp = document.getElementById('mainPage');
@@ -786,7 +766,6 @@ function setupScroll() {
   });
 }
 
-/* 工具 */
 function formatTime(d) {
   var diff = new Date() - d;
   if (diff < 60000) return '刚刚';
@@ -819,7 +798,6 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
-/* 灯箱 */
 function openLightbox(e, src) {
   e.stopPropagation();
   var lb = document.getElementById('lightbox');
@@ -837,7 +815,6 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') { closeLightbox(); closeNewGroup(); }
 });
 
-/* 拉黑 */
 var chatTarget = null;
 var chatTargetType = 'user';
 
@@ -856,7 +833,6 @@ function toggleBlock(uid) {
   });
 }
 
-/* 聊天 */
 function showChat() {
   hideAll();
   document.getElementById('chatPage').style.display = 'block';
@@ -1010,14 +986,12 @@ function sendChatFile() {
   });
 }
 
-/* 快捷互关 */
 function quickFollow(uid) {
   fetch('/api/follow/' + uid, { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) {
     showToast(d.following ? '已关注！请等待对方也关注你即可畅聊' : '已取消关注', 'success');
   }).catch(function(e) { showToast('操作失败', 'error'); });
 }
 
-/* 群聊 */
 function showNewGroup() {
   document.getElementById('newGroupModal').style.display = 'flex';
 }
@@ -1044,7 +1018,6 @@ function createGroup() {
   });
 }
 
-/* 投票功能 */
 function togglePollForm() {
   pollActive = !pollActive;
   document.getElementById('pollForm').style.display = pollActive ? 'block' : 'none';
@@ -1110,9 +1083,7 @@ function votePoll(pollId, optIndex) {
   }).catch(function(e) { console.log('votePoll:', e); });
 }
 
-/* ========== yzrt 组件交互 ========== */
 
-/* launch start 悬浮按钮 → 打开发帖框并聚焦 */
 function openComposer() {
   var c = document.querySelector('.post-composer');
   if (c) {
@@ -1122,18 +1093,14 @@ function openComposer() {
   }
 }
 
-/* 设置弹层 */
 function openSettings() { document.getElementById('settingsModal').classList.add('show'); }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
 
-/* Pro 弹窗 */
 
-/* 点击弹层遮罩关闭 */
 document.querySelectorAll('.yzrt-modal').forEach(function(m) {
   m.addEventListener('click', function(e) { if (e.target === m) m.classList.remove('show'); });
 });
 
-/* 真实拟态旋钮：拖动调节背景模糊度 (0~20px) */
 (function initKnob() {
   var knob = document.getElementById('blurKnob');
   if (!knob) return;
@@ -1160,7 +1127,6 @@ document.querySelectorAll('.yzrt-modal').forEach(function(m) {
   });
   window.addEventListener('mouseup', function() { dragging = false; });
 
-  /* 触屏 */
   knob.addEventListener('touchstart', function(e) {
     dragging = true; startY = e.touches[0].clientY;
     startBlur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bg-blur')) || 7;
