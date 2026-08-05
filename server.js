@@ -154,7 +154,10 @@ app.post('/api/register', (req, res) => {
     req.session.userId = result.lastInsertRowid;
     res.json({ id: result.lastInsertRowid, username: name, nickname: name, avatar: 'default' });
   } catch (e) {
-    if (e.message.includes('UNIQUE')) return res.status(400).json({ error: '该用户名已被占用' });
+    if (e.code === 'SQLITE_CONSTRAINT_UNIQUE' && e.message.includes('users.username')) {
+      return res.status(400).json({ error: '该用户名已被占用' });
+    }
+    console.error('Register failed:', e.message);
     res.status(500).json({ error: '注册失败' });
   }
 });

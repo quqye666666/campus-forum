@@ -195,7 +195,7 @@ try {
 
   const empties = db.prepare("SELECT id FROM users WHERE phone = '' OR phone IS NULL").all();
   empties.forEach(function(u) { db.prepare('UPDATE users SET phone = ? WHERE id = ?').run('unset_' + u.id, u.id); });
-  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)');
+  db.exec('DROP INDEX IF EXISTS idx_users_phone');
 
   if (!userColumns.includes('email')) {
     db.exec('ALTER TABLE users ADD COLUMN email TEXT DEFAULT ""');
