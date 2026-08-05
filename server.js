@@ -307,9 +307,22 @@ app.get('/api/posts', (req, res) => {
 });
 
 app.post('/api/posts', requireAuth, upload.array('images', 9), (req, res) => {
-  const { content, section_id = 1 } = req.body;
+  const { content, section_id = 1, request_id } = req.body;
   if (!content || !content.trim()) {
     return res.status(400).json({ error: '内容不能为空' });
+  }
+  if (request_id) {
+    const existing = db.prepare(`
+      SELECT p.*, u.nickname, u.avatar, u.username, s.name as section_name, s.icon as section_icon
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      JOIN sections s ON p.section_id = s.id
+      WHERE p.user_id = ? AND p.request_id = ?
+    `).get(req.session.userId, request_id);
+    if (existing) {
+      for (const file of req.files || []) fs.unlink(file.path, () => {});
+      return res.json(existing);
+    }
   }
   const images = req.files && req.files.length ? req.files.map(f => '/uploads/' + f.filename).join(',') : '';
   const mime = req.files && req.files.length ? req.files[0].mimetype : '';
@@ -317,7 +330,7 @@ app.post('/api/posts', requireAuth, upload.array('images', 9), (req, res) => {
   if (mime.startsWith('video/')) media_type = 'video';
   else if (mime.startsWith('image/')) media_type = 'image';
   else if (mime) media_type = 'file';
-  const result = db.prepare('INSERT INTO posts (user_id, section_id, content, image, media_type) VALUES (?, ?, ?, ?, ?)').run(req.session.userId, section_id, content.trim(), images, media_type);
+  const result = db.prepare('INSERT INTO posts (user_id, section_id, content, image, media_type, request_id) VALUES (?, ?, ?, ?, ?, ?)').run(req.session.userId, section_id, content.trim(), images, media_type, request_id || null);
   const post = db.prepare(`
     SELECT p.*, u.nickname, u.avatar, u.username, s.name as section_name, s.icon as section_icon
     FROM posts p

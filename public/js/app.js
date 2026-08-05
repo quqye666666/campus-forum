@@ -10,6 +10,8 @@ var bgIndex = 0;
 var bgTimer = null;
 var pollActive = false;
 var onlineInterval = null;
+var isCreatingPost = false;
+var postRequestId = null;
 
 (function init() {
   loadBgList();
@@ -450,17 +452,32 @@ function toggleLike(pid, btnEl) {
 }
 
 function createPost() {
+  if (isCreatingPost) return;
   if (pollActive) {
     createPoll();
     return;
   }
   var content = document.getElementById('postContent').value.trim();
   if (!content) { showToast('请输入内容', 'error'); return; }
+  isCreatingPost = true;
+  var button = document.getElementById('publishPostBtn');
+  button.disabled = true;
+  button.textContent = '发布中...';
+  if (!postRequestId) {
+    postRequestId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'post-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  }
   var fd = new FormData();
   fd.append('content', content);
   fd.append('section_id', document.getElementById('postSection').value);
+  fd.append('request_id', postRequestId);
   selectedImageFiles.forEach(function(file) { fd.append('images', file); });
-  fetch('/api/posts', { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function() {
+  fetch('/api/posts', { method: 'POST', body: fd }).then(function(r) {
+    return r.json().then(function(data) {
+      if (!r.ok) throw new Error(data.error || '发布失败');
+      return data;
+    });
+  }).then(function() {
+    postRequestId = null;
     document.getElementById('postContent').value = '';
     removeImage();
     showToast('发布成功！', 'success');
@@ -469,7 +486,14 @@ function createPost() {
     document.getElementById('postsList').innerHTML = '';
     loadPosts();
     loadSections();
-  }).catch(function(e) { console.log('createPost:', e); });
+  }).catch(function(e) {
+    console.log('createPost:', e);
+    showToast(e.message || '发布失败，请重试', 'error');
+  }).finally(function() {
+    isCreatingPost = false;
+    button.disabled = false;
+    button.textContent = '发布动态';
+  });
 }
 
 function createPoll() {

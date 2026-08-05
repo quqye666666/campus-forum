@@ -172,6 +172,10 @@ const postColumns = db.prepare("PRAGMA table_info(posts)").all().map(c => c.name
 if (!postColumns.includes('media_type')) {
   db.exec('ALTER TABLE posts ADD COLUMN media_type TEXT DEFAULT ""');
 }
+if (!postColumns.includes('request_id')) {
+  db.exec('ALTER TABLE posts ADD COLUMN request_id TEXT');
+}
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_posts_user_request ON posts(user_id, request_id) WHERE request_id IS NOT NULL AND request_id <> ''");
 
 const msgColumns = db.prepare("PRAGMA table_info(messages)").all().map(c => c.name);
 if (!msgColumns.includes('is_read')) {
