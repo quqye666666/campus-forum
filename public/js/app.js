@@ -14,6 +14,7 @@ var isCreatingPost = false;
 var postRequestId = null;
 var aiMessages = [];
 var aiSending = false;
+var selectedAIImage = null;
 
 (function init() {
   loadBgList();
@@ -211,6 +212,7 @@ function showMainPage() {
   document.getElementById('aiPage').style.display = 'none';
   document.getElementById('aiPage').setAttribute('aria-hidden', 'true');
   document.getElementById('aiFab').style.display = '';
+  setAIHomeFab(false);
   document.getElementById('postComposer').style.display = '';
   document.getElementById('postsList').style.display = '';
   document.getElementById('loadingMore').style.display = '';
@@ -228,6 +230,7 @@ function showProfile(userId) {
   document.getElementById('aiPage').style.display = 'none';
   document.getElementById('aiPage').setAttribute('aria-hidden', 'true');
   document.getElementById('aiFab').style.display = '';
+  setAIHomeFab(false);
   document.getElementById('profileEditForm').classList.remove('show');
   currentProfileUserId = userId;
   loadProfile(userId);
@@ -510,6 +513,7 @@ function openAIChat() {
   page.style.display = 'block';
   page.setAttribute('aria-hidden', 'false');
   document.getElementById('aiFab').style.display = 'none';
+  setAIHomeFab(true);
   setTimeout(function() { document.getElementById('aiInput').focus(); }, 100);
 }
 
@@ -521,6 +525,47 @@ function fillAIPrompt(text) {
   var input = document.getElementById('aiInput');
   input.value = text;
   input.focus();
+}
+
+function setAIHomeFab(active) {
+  var fab = document.getElementById('launchFab');
+  var text = fab.querySelector('.launch-text');
+  fab.classList.toggle('ai-return-fab', active);
+  fab.title = active ? '返回首页' : '发帖';
+  fab.onclick = active ? closeAIChat : openComposer;
+  text.textContent = active ? 'HOME' : 'POST';
+}
+
+function handleAIImage(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('请选择图片文件', 'error'); return; }
+  if (file.size > 8 * 1024 * 1024) { showToast('图片不能超过 8MB', 'error'); return; }
+  var reader = new FileReader();
+  reader.onload = function() {
+    var image = new Image();
+    image.onload = function() {
+      var scale = Math.min(1, 1280 / Math.max(image.width, image.height));
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      selectedAIImage = canvas.toDataURL('image/jpeg', 0.82);
+      document.getElementById('aiImagePreviewImg').src = selectedAIImage;
+      document.getElementById('aiImagePreview').classList.add('show');
+      document.getElementById('aiImagePreview').setAttribute('aria-hidden', 'false');
+    };
+    image.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function clearAIImage() {
+  selectedAIImage = null;
+  document.getElementById('aiImagePreviewImg').removeAttribute('src');
+  document.getElementById('aiImagePreview').classList.remove('show');
+  document.getElementById('aiImagePreview').setAttribute('aria-hidden', 'true');
 }
 
 function appendAIMessage(role, content, loading) {
@@ -539,6 +584,20 @@ function appendAIMessage(role, content, loading) {
   if (loading) {
     message.classList.add('loading');
     message.innerHTML = '<span></span><span></span><span></span>';
+  } else if (Array.isArray(content)) {
+    content.forEach(function(part) {
+      if (part.type === 'text') {
+        var text = document.createElement('div');
+        text.textContent = part.text;
+        message.appendChild(text);
+      } else if (part.type === 'image_url' && part.image_url && /^data:image\//.test(part.image_url.url)) {
+        var image = document.createElement('img');
+        image.className = 'ai-message-image';
+        image.src = part.image_url.url;
+        image.alt = '发送的图片';
+        message.appendChild(image);
+      }
+    });
   } else {
     message.textContent = content;
   }
@@ -556,12 +615,14 @@ function sendAIMessage(e) {
   if (aiSending) return false;
   var input = document.getElementById('aiInput');
   var content = input.value.trim();
-  if (!content) return false;
+  if (!content && !selectedAIImage) return false;
+  var messageContent = selectedAIImage ? [{ type: 'text', text: content || '请看看这张图片' }, { type: 'image_url', image_url: { url: selectedAIImage } }] : content;
   aiSending = true;
   var button = document.getElementById('aiSendBtn');
   input.value = '';
-  appendAIMessage('user', content);
-  aiMessages.push({ role: 'user', content: content });
+  appendAIMessage('user', messageContent);
+  aiMessages.push({ role: 'user', content: messageContent });
+  clearAIImage();
   var responseMessage = appendAIMessage('assistant', '', true);
   button.disabled = true;
   button.textContent = '发送中';

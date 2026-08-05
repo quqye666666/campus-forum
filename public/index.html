@@ -301,9 +301,11 @@
           </div>
           <form class="ai-input-area" onsubmit="return sendAIMessage(event)">
             <div class="ai-input-prefix">&gt;_</div>
-            <textarea id="aiInput" rows="2" maxlength="4000" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage(event)}" required></textarea>
+            <textarea id="aiInput" rows="2" maxlength="4000" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage(event)}"></textarea>
+            <label class="ai-image-btn" title="发送图片"><span>＋</span><input id="aiImageInput" type="file" accept="image/*" onchange="handleAIImage(event)"></label>
             <button class="ai-send-btn" id="aiSendBtn" type="submit" title="发送">发送 <span>&uarr;</span></button>
           </form>
+          <div class="ai-image-preview" id="aiImagePreview" aria-hidden="true"><img id="aiImagePreviewImg" alt="待发送图片"><button type="button" onclick="clearAIImage()" title="移除图片">&times;</button></div>
           <div class="ai-input-note">昆山浦高ai 随时在这里 <span>SHIFT + ENTER 换行</span></div>
         </main>
       </div>

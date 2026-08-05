@@ -59,7 +59,7 @@ app.use((req, res, next) => {
 
 app.get('/health', (req, res) => res.send('OK'));
 
-app.use(express.json());
+app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: 0,
@@ -93,9 +93,18 @@ app.post('/api/ai/chat', requireAuth, async (req, res) => {
   if (!zayuApiKey) return res.status(503).json({ error: 'AI 服务暂未配置' });
   const messages = Array.isArray(req.body.messages) ? req.body.messages : [];
   const safeMessages = messages
-    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant'))
     .slice(-20)
-    .map(m => ({ role: m.role, content: m.content.slice(0, 4000) }));
+    .map(m => {
+      if (typeof m.content === 'string') return { role: m.role, content: m.content.slice(0, 4000) };
+      if (!Array.isArray(m.content)) return null;
+      const content = m.content.filter(part => {
+        if (part && part.type === 'text' && typeof part.text === 'string') return part.text.length <= 4000;
+        return part && part.type === 'image_url' && typeof part.image_url?.url === 'string' && /^data:image\//.test(part.image_url.url) && part.image_url.url.length <= 9000000;
+      });
+      return content.length ? { role: m.role, content } : null;
+    })
+    .filter(Boolean);
   if (!safeMessages.length || safeMessages[safeMessages.length - 1].role !== 'user') {
     return res.status(400).json({ error: '请输入消息' });
   }
