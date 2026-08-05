@@ -274,6 +274,23 @@
     </div>
   </div>
 
+  <button class="ai-fab" id="aiFab" onclick="openAIChat()" title="AI 助手" aria-label="打开 AI 助手">AI</button>
+  <div class="ai-modal" id="aiModal" aria-hidden="true">
+    <div class="ai-card">
+      <div class="ai-header">
+        <div><strong>AI 助手</strong><span>在线</span></div>
+        <button class="ai-close" onclick="closeAIChat()" title="关闭">&times;</button>
+      </div>
+      <div class="ai-messages" id="aiMessages">
+        <div class="ai-message assistant">你好，有什么可以帮你？</div>
+      </div>
+      <form class="ai-input-area" onsubmit="return sendAIMessage(event)">
+        <textarea id="aiInput" rows="2" maxlength="4000" placeholder="输入消息..." required></textarea>
+        <button class="btn btn-primary btn-sm" id="aiSendBtn" type="submit">发送</button>
+      </form>
+    </div>
+  </div>
+
 </div>
 
 <script src="/js/app.js?v=3"></script>

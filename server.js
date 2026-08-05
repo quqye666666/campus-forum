@@ -17,6 +17,10 @@ const bcrypt = require('bcryptjs');
 const https = require('https');
 const { spawn } = require('child_process');
 
+const zayuApiBase = process.env.ZAYU_API_BASE || 'https://api.zayuapi.com';
+const zayuApiKey = process.env.ZAYU_API_KEY || '';
+const zayuModel = process.env.ZAYU_MODEL || 'gpt-5.6-sol';
+
 let db;
 try {
   db = require('./database');
@@ -83,6 +87,33 @@ function requireAuth(req, res, next) {
 app.get('/api/online', (req, res) => {
   const count = db.prepare("SELECT COUNT(*) as n FROM users WHERE last_active > datetime('now', '-5 minutes')").get();
   res.json({ online: count.n });
+});
+
+app.post('/api/ai/chat', requireAuth, async (req, res) => {
+  if (!zayuApiKey) return res.status(503).json({ error: 'AI 服务暂未配置' });
+  const messages = Array.isArray(req.body.messages) ? req.body.messages : [];
+  const safeMessages = messages
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .slice(-20)
+    .map(m => ({ role: m.role, content: m.content.slice(0, 4000) }));
+  if (!safeMessages.length || safeMessages[safeMessages.length - 1].role !== 'user') {
+    return res.status(400).json({ error: '请输入消息' });
+  }
+  try {
+    const response = await fetch(zayuApiBase.replace(/\/$/, '') + '/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + zayuApiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: zayuModel, messages: safeMessages, temperature: 0.7 })
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(502).json({ error: data.error?.message || 'AI 服务请求失败' });
+    const content = data.choices?.[0]?.message?.content;
+    if (typeof content !== 'string') return res.status(502).json({ error: 'AI 返回内容为空' });
+    res.json({ content });
+  } catch (e) {
+    console.error('AI request failed:', e.message);
+    res.status(502).json({ error: 'AI 服务暂时不可用' });
+  }
 });
 
 // ========== 用户相关 API ==========

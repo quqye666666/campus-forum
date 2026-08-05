@@ -12,6 +12,8 @@ var pollActive = false;
 var onlineInterval = null;
 var isCreatingPost = false;
 var postRequestId = null;
+var aiMessages = [];
+var aiSending = false;
 
 (function init() {
   loadBgList();
@@ -494,6 +496,63 @@ function createPost() {
     button.disabled = false;
     button.textContent = '发布动态';
   });
+}
+
+function openAIChat() {
+  var modal = document.getElementById('aiModal');
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+  setTimeout(function() { document.getElementById('aiInput').focus(); }, 100);
+}
+
+function closeAIChat() {
+  var modal = document.getElementById('aiModal');
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+function appendAIMessage(role, content) {
+  var message = document.createElement('div');
+  message.className = 'ai-message ' + role;
+  message.textContent = content;
+  document.getElementById('aiMessages').appendChild(message);
+  message.scrollIntoView({ block: 'end' });
+}
+
+function sendAIMessage(e) {
+  e.preventDefault();
+  if (aiSending) return false;
+  var input = document.getElementById('aiInput');
+  var content = input.value.trim();
+  if (!content) return false;
+  aiSending = true;
+  var button = document.getElementById('aiSendBtn');
+  input.value = '';
+  appendAIMessage('user', content);
+  aiMessages.push({ role: 'user', content: content });
+  button.disabled = true;
+  button.textContent = '发送中';
+  fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: aiMessages })
+  }).then(function(r) {
+    return r.json().then(function(data) {
+      if (!r.ok) throw new Error(data.error || 'AI 请求失败');
+      return data;
+    });
+  }).then(function(data) {
+    aiMessages.push({ role: 'assistant', content: data.content });
+    appendAIMessage('assistant', data.content);
+  }).catch(function(error) {
+    appendAIMessage('assistant', error.message || 'AI 暂时不可用，请稍后重试');
+  }).finally(function() {
+    aiSending = false;
+    button.disabled = false;
+    button.textContent = '发送';
+    input.focus();
+  });
+  return false;
 }
 
 function createPoll() {
