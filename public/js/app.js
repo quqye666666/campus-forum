@@ -533,7 +533,7 @@ function appendAIMessage(role, content, loading) {
   body.className = 'ai-message-body';
   var name = document.createElement('div');
   name.className = 'ai-message-name';
-  name.textContent = role === 'assistant' ? '校园 AI' : ((currentUser && currentUser.nickname) || '我');
+  name.textContent = role === 'assistant' ? '昆山浦高ai' : ((currentUser && currentUser.nickname) || '我');
   var message = document.createElement('div');
   message.className = 'ai-message';
   if (loading) {

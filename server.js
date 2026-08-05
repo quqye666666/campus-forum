@@ -101,7 +101,7 @@ app.post('/api/ai/chat', requireAuth, async (req, res) => {
   }
   const requestBody = {
     model: zayuModel,
-    messages: [{ role: 'system', content: '你是昆山市张浦高级中学校园论坛的 AI 助手。使用中文，回答清晰、友善、简洁。' }, ...safeMessages],
+    messages: [{ role: 'system', content: '你是昆山市张浦高级中学校园论坛的昆山浦高ai。使用中文，回答清晰、友善、简洁。' }, ...safeMessages],
     temperature: 0.7
   };
   function readContent(value) {
