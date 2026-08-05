@@ -511,12 +511,32 @@ function closeAIChat() {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-function appendAIMessage(role, content) {
+function appendAIMessage(role, content, loading) {
+  var row = document.createElement('div');
+  row.className = 'ai-message-row ' + role;
+  var avatar = document.createElement('div');
+  avatar.className = 'ai-avatar';
+  avatar.textContent = role === 'assistant' ? 'AI' : ((currentUser && currentUser.nickname) ? currentUser.nickname[0] : '我');
+  var body = document.createElement('div');
+  body.className = 'ai-message-body';
+  var name = document.createElement('div');
+  name.className = 'ai-message-name';
+  name.textContent = role === 'assistant' ? '校园 AI' : ((currentUser && currentUser.nickname) || '我');
   var message = document.createElement('div');
-  message.className = 'ai-message ' + role;
-  message.textContent = content;
-  document.getElementById('aiMessages').appendChild(message);
-  message.scrollIntoView({ block: 'end' });
+  message.className = 'ai-message';
+  if (loading) {
+    message.classList.add('loading');
+    message.innerHTML = '<span></span><span></span><span></span>';
+  } else {
+    message.textContent = content;
+  }
+  body.appendChild(name);
+  body.appendChild(message);
+  row.appendChild(avatar);
+  row.appendChild(body);
+  document.getElementById('aiMessages').appendChild(row);
+  row.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  return message;
 }
 
 function sendAIMessage(e) {
@@ -530,22 +550,43 @@ function sendAIMessage(e) {
   input.value = '';
   appendAIMessage('user', content);
   aiMessages.push({ role: 'user', content: content });
+  var responseMessage = appendAIMessage('assistant', '', true);
   button.disabled = true;
   button.textContent = '发送中';
   fetch('/api/ai/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: aiMessages })
-  }).then(function(r) {
-    return r.json().then(function(data) {
-      if (!r.ok) throw new Error(data.error || 'AI 请求失败');
-      return data;
-    });
-  }).then(function(data) {
-    aiMessages.push({ role: 'assistant', content: data.content });
-    appendAIMessage('assistant', data.content);
+  }).then(async function(r) {
+    if (!r.ok) {
+      var data = await r.json();
+      throw new Error(data.error || 'AI 请求失败');
+    }
+    var reader = r.body.getReader();
+    var decoder = new TextDecoder();
+    var answer = '';
+    var started = false;
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      var chunk = decoder.decode(result.value, { stream: true });
+      if (!chunk) continue;
+      if (!started) {
+        started = true;
+        responseMessage.classList.remove('loading');
+        responseMessage.classList.add('streaming');
+        responseMessage.textContent = '';
+      }
+      answer += chunk;
+      responseMessage.textContent = answer;
+      responseMessage.scrollIntoView({ block: 'end' });
+    }
+    responseMessage.classList.remove('streaming');
+    if (!answer) throw new Error('AI 返回内容为空');
+    aiMessages.push({ role: 'assistant', content: answer });
   }).catch(function(error) {
-    appendAIMessage('assistant', error.message || 'AI 暂时不可用，请稍后重试');
+    responseMessage.classList.remove('loading', 'streaming');
+    responseMessage.textContent = error.message || 'AI 暂时不可用，请稍后重试';
   }).finally(function() {
     aiSending = false;
     button.disabled = false;
@@ -895,7 +936,7 @@ function closeLightbox() {
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeLightbox(); closeNewGroup(); }
+  if (e.key === 'Escape') { closeLightbox(); closeNewGroup(); closeAIChat(); }
 });
 
 var chatTarget = null;

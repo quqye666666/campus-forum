@@ -103,15 +103,47 @@ app.post('/api/ai/chat', requireAuth, async (req, res) => {
     const response = await fetch(zayuApiBase.replace(/\/$/, '') + '/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + zayuApiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: zayuModel, messages: safeMessages, temperature: 0.7 })
+      body: JSON.stringify({
+        model: zayuModel,
+        messages: [{ role: 'system', content: '你是昆山市张浦高级中学校园论坛的 AI 助手。使用中文，回答清晰、友善、简洁。' }, ...safeMessages],
+        temperature: 0.7,
+        stream: true
+      })
     });
-    const data = await response.json();
-    if (!response.ok) return res.status(502).json({ error: data.error?.message || 'AI 服务请求失败' });
-    const content = data.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') return res.status(502).json({ error: 'AI 返回内容为空' });
-    res.json({ content });
+    if (!response.ok) {
+      const text = await response.text();
+      let message = 'AI 服务请求失败';
+      try { message = JSON.parse(text).error?.message || message; } catch (e) {}
+      return res.status(502).json({ error: message });
+    }
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finished = false;
+    while (!finished) {
+      const result = await reader.read();
+      finished = result.done;
+      buffer += decoder.decode(result.value || new Uint8Array(), { stream: !finished });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const chunk = JSON.parse(payload).choices?.[0]?.delta?.content;
+          if (chunk) res.write(chunk);
+        } catch (e) {}
+      }
+    }
+    res.end();
   } catch (e) {
     console.error('AI request failed:', e.message);
+    if (res.headersSent) return res.end();
     res.status(502).json({ error: 'AI 服务暂时不可用' });
   }
 });
