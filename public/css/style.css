@@ -834,3 +834,58 @@ body {
   .ai-input-area { margin:0 12px; }
   .ai-input-note { margin-left:14px; margin-right:14px; }
 }
+
+.ai-page { color:#34445c; background:#f4f8ff; }
+.ai-page::before { opacity:0.45; background-image:linear-gradient(135deg, rgba(255,201,215,0.25), transparent 34%), linear-gradient(315deg, rgba(167,224,215,0.28), transparent 35%); background-size:100% 100%; mask-image:none; }
+.ai-page::after { left:10%; right:10%; top:18%; height:2px; background:rgba(255,174,191,0.42); box-shadow:0 0 18px rgba(255,174,191,0.25); transform:rotate(-4deg); animation:aiScan 11s ease-in-out infinite; }
+.ai-page-shell { padding-bottom:28px; }
+.ai-page-header { border-bottom-color:#e3eaf4; }
+.ai-back { color:#718096; }
+.ai-back:hover { color:#40516a; }
+.ai-back span { color:#f28ba4; }
+.ai-page-title { color:#33445d; }
+.ai-live-mark { display:flex; align-items:center; justify-content:center; width:24px; height:24px; color:#f28ba4; font-size:17px; background:#fff0f3; box-shadow:0 4px 10px rgba(242,139,164,0.18); }
+.ai-page-title > span:last-child { color:#91a0b3; letter-spacing:0.03em; }
+.ai-page-meta { color:#7f91a5; letter-spacing:0.04em; }
+.ai-status-dot { background:#6fcbb0; box-shadow:0 0 8px rgba(111,203,176,0.55); }
+.ai-workspace { gap:20px; }
+.ai-sidepanel { padding:24px 20px; border-color:#e2eaf4; border-radius:24px; background:rgba(255,255,255,0.82); box-shadow:0 14px 36px rgba(84,111,145,0.1); }
+.ai-brand-avatar, .ai-avatar { color:#fff; border:0; background:linear-gradient(135deg,#f49ab0,#82c9d8); box-shadow:0 5px 13px rgba(115,176,196,0.2); }
+.ai-brand-avatar { border-radius:15px; }
+.ai-brand-name { color:#33445d; }
+.ai-brand-sub { color:#99a7b8; letter-spacing:0.03em; }
+.ai-side-rule { background:#edf1f6; }
+.ai-side-label { color:#98a6b6; letter-spacing:0.08em; }
+.ai-model-chip { margin-bottom:26px; color:#53657a; border-color:#e7edf4; border-radius:13px; background:#f8fbff; }
+.ai-model-chip small { color:#69b99e; }
+.ai-model-pulse { background:#6fcbb0; box-shadow:0 0 9px rgba(111,203,176,0.65); }
+.ai-prompt-chip { border-radius:12px; color:#63768a; background:#f8fbff; }
+.ai-prompt-chip:hover { color:#496277; border-color:#cce8e8; background:#effafa; transform:translateX(3px); }
+.ai-prompt-chip span { color:#e99aaa; }
+.ai-side-footer { color:#a3afbd; letter-spacing:0.03em; }
+.ai-footer-line { background:#e4ebf2; }
+.ai-console { border-color:#e2eaf4; border-radius:24px; background:rgba(255,255,255,0.78); box-shadow:0 14px 36px rgba(84,111,145,0.11); }
+.ai-console-heading { border-bottom-color:#edf1f6; }
+.ai-kicker { color:#e38da5; letter-spacing:0.12em; }
+.ai-console-heading h2 { color:#33445d; }
+.ai-session-id { color:#9ba9b9; letter-spacing:0.04em; }
+.ai-message-row { animation:aiMessageIn 0.35s var(--bounce) both; }
+.ai-avatar { background:linear-gradient(135deg,#8fd1df,#9edbc0); }
+.ai-message-row.user .ai-avatar { color:#fff; background:linear-gradient(135deg,#f2a0b5,#f5c27f); border:0; }
+.ai-message-name { color:#8b9aab; }
+.ai-message-name span { color:#b5c0cb; }
+.ai-message { color:#52657a; border-color:#e5edf4; border-radius:5px 16px 16px 16px; background:#f8fbff; box-shadow:0 5px 14px rgba(112,143,173,0.08); }
+.ai-message-row.user .ai-message { color:#fff; border-color:transparent; border-radius:16px 5px 16px 16px; background:linear-gradient(135deg,#78c9bd,#80cbdc); }
+.ai-message.loading span { background:#ed9cb3; }
+.ai-message.streaming::after { background:#ef9caf; }
+.ai-input-area { border-color:#e0e9f2; border-radius:17px; background:#fff; box-shadow:0 8px 18px rgba(104,135,165,0.08); }
+.ai-input-prefix { color:#e898aa; }
+.ai-input-area textarea { color:#465b72; }
+.ai-input-area textarea::placeholder { color:#a8b5c2; }
+.ai-send-btn { min-width:78px; border:0; border-radius:12px; color:#fff; background:linear-gradient(135deg,#ef9caf,#f3b778); box-shadow:0 5px 12px rgba(239,156,175,0.22); }
+.ai-send-btn:hover { background:linear-gradient(135deg,#e98da4,#efad65); box-shadow:0 7px 16px rgba(239,156,175,0.3); }
+.ai-send-btn span { color:#fff; }
+.ai-input-note { color:#a3afbd; letter-spacing:0.03em; }
+.ai-input-note span { color:#a9b4bf; }
+@keyframes aiScan { 0%,100% { transform:translateY(-80px) rotate(-4deg); opacity:0; } 35%,65% { opacity:1; } 50% { transform:translateY(420px) rotate(-4deg); } }
+@keyframes aiBlink { 0%,100% { opacity:0.6; transform:rotate(-8deg) scale(0.94); } 50% { opacity:1; transform:rotate(8deg) scale(1.08); } }
